@@ -819,6 +819,12 @@
     <ClCompile Include="Engine\Source\Runtime\Core\Math\MathUtility.cpp" />
     <ClCompile Include="Engine\Source\Contents\Objects\DamageCameraShake.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Camera\PerlinNoiseCameraShakePattern.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\MeshRenderPass.cpp">
+      <Filter>Engine\Source\Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.cpp">
+      <Filter>Engine\Source\Runtime\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -939,6 +945,12 @@
     <ClInclude Include="Engine\Source\Contents\Actors\TriggerBox.h" />
     <ClInclude Include="Engine\Source\Contents\Objects\DamageCameraShake.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Camera\PerlinNoiseCameraShakePattern.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\MeshRenderPass.h">
+      <Filter>Engine\Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.h">
+      <Filter>Engine\Source\Runtime\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
