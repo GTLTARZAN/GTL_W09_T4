@@ -178,6 +178,7 @@
   <ItemGroup>
     <ClCompile Include="Engine\Source\Contents\Actors\TriggerBox.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\MathUtility.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\FBXLoader.cpp"/>
     <ClCompile Include="Engine\Source\Runtime\Renderer\CameraEffectRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Contents\Objects\DamageCameraShake.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Camera\CameraModifier.cpp" />
@@ -428,6 +429,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Contents\Actors\TriggerBox.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\SkeletonAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\FBXLoader.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\CameraEffectRenderPass.h" />
     <ClInclude Include="Engine\Source\Contents\Objects\DamageCameraShake.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Camera\CameraModifier.h" />
