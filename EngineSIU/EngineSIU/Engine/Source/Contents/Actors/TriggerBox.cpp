@@ -1,5 +1,5 @@
-﻿#include "TriggerBox.h"
-#include "Components/StaticMeshComponent.h"
+#include "TriggerBox.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Engine/FObjLoader.h"
 

@@ -3,7 +3,7 @@
 
 #include "Engine/Engine.h"
 #include "UObject/UObjectIterator.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Engine/EditorEngine.h"
 #include "UnrealEd/EditorViewportClient.h"

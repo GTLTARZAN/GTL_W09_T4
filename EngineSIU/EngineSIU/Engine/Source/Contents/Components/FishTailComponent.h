@@ -1,5 +1,5 @@
 #pragma once
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 
 class UFishTailComponent : public UStaticMeshComponent
 {

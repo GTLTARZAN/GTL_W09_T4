@@ -2,7 +2,7 @@
 #include "ItemActor.h"
 
 #include "Components/SphereComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 #include "Engine/FObjLoader.h"
 
 AItemActor::AItemActor()

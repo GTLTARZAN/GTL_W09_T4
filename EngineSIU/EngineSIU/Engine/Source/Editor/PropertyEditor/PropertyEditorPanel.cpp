@@ -14,7 +14,7 @@
 #include "Components/Light/SpotLightComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Components/Light/AmbientLightComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 #include "Components/TextComponent.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/FObjLoader.h"

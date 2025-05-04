@@ -27,7 +27,7 @@
 
 #include "UObject/ObjectTypes.h"
 
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 #include "Engine/EditorEngine.h"
 
 

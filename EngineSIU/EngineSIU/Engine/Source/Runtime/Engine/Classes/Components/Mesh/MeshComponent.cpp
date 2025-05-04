@@ -3,7 +3,6 @@
 #include "CoreMiscDefines.h"
 #include "UObject/Casts.h"
 
-
 UObject* UMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
@@ -59,7 +58,7 @@ void UMeshComponent::SetMaterial(uint32 ElementIndex, UMaterial* Material)
 
 void UMeshComponent::SetMaterialByName(FName MaterialSlotName, UMaterial* Material)
 {
-    int32 MaterialIndex = GetMaterialIndex(MaterialSlotName);
+    int32 MaterialIndex =   (MaterialSlotName);
     if (MaterialIndex < 0)
         return;
 

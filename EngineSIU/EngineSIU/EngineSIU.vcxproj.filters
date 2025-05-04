@@ -411,10 +411,10 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\CubeComp.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\MeshComponent.cpp">
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\MeshComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\MeshComponent.h">
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\MeshComponent.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponent.cpp">
@@ -444,10 +444,10 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SphereComp.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\StaticMeshComponent.cpp">
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\StaticMeshComponent.h">
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshComponent.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\ParticleSubUVComponent.cpp">
@@ -819,6 +819,9 @@
     <ClCompile Include="Engine\Source\Runtime\Core\Math\MathUtility.cpp" />
     <ClCompile Include="Engine\Source\Contents\Objects\DamageCameraShake.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Camera\PerlinNoiseCameraShakePattern.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\USkinnedMeshComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\USkeletalMeshComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -939,6 +942,10 @@
     <ClInclude Include="Engine\Source\Contents\Actors\TriggerBox.h" />
     <ClInclude Include="Engine\Source\Contents\Objects\DamageCameraShake.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Camera\PerlinNoiseCameraShakePattern.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\USkinnedMeshComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\USkeletalMeshComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMeshDefine.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

@@ -35,3 +35,5 @@ protected:
     bool Check_Capsule_Sphere(const UShapeComponent* A, const UShapeComponent* B, FOverlapResult& OutResult) const;
     bool Check_Capsule_Capsule(const UShapeComponent* A, const UShapeComponent* B, FOverlapResult& OutResult) const;
 };
+
+

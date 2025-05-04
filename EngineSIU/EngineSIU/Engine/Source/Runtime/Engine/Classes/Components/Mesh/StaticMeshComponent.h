@@ -1,6 +1,6 @@
 #pragma once
-#include "Components/MeshComponent.h"
-#include "Mesh/StaticMeshRenderData.h"
+#include "MeshComponent.h"
+#include "StaticMeshRenderData.h"
 
 #include "Engine/Asset/StaticMeshAsset.h"
 

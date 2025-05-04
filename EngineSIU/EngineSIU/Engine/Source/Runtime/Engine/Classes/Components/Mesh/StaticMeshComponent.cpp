@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "Components/StaticMeshComponent.h"
+#include "Components/Mesh/StaticMeshComponent.h"
 
 #include "Engine/FObjLoader.h"
 #include "Launch/EngineLoop.h"

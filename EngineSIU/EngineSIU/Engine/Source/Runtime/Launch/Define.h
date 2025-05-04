@@ -115,16 +115,16 @@ struct FObjMaterialInfo
     FVector DiffuseColor = FVector(0.7f, 0.7f, 0.7f);      // Kd: Diffuse Color
     FVector SpecularColor = FVector(0.5f, 0.5f, 0.5f);     // Ks: Specular Color
     FVector AmbientColor = FVector(0.01f, 0.01f, 0.01f);   // Ka: Ambient Color
-    FVector EmissiveColor = FVector::ZeroVector;                   // Ke: Emissive Color
+    FVector EmissiveColor = FVector::ZeroVector;           // Ke: Emissive Color
 
-    float SpecularExponent = 250.f;                                // Ns: Specular Power
-    float IOR = 1.5f;                                              // Ni: Index of Refraction
-    float Transparency = 0.f;                                      // d or Tr: Transparency of surface
-    float BumpMultiplier = 1.f;                                    // -bm: Bump Multiplier
-    uint32 IlluminanceModel;                                       // illum: illumination Model between 0 and 10.
+    float SpecularExponent = 250.f;                        // Ns: Specular Power
+    float IOR = 1.5f;                                      // Ni: Index of Refraction
+    float Transparency = 0.f;                              // d or Tr: Transparency of surface
+    float BumpMultiplier = 1.f;                            // -bm: Bump Multiplier
+    uint32 IlluminanceModel;                               // illum: illumination Model between 0 and 10.
 
-    float Metallic = 0.0f;                                         // Pm: Metallic
-    float Roughness = 0.5f;                                        // Pr: Roughness
+    float Metallic = 0.0f;                                 // Pm: Metallic
+    float Roughness = 0.5f;                                // Pr: Roughness
     
     /* Texture */
     TArray<FTextureInfo> TextureInfos;

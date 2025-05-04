@@ -4,7 +4,7 @@
 #include "Actors/Cube.h"
 #include "Actors/Player.h"
 #include "BaseGizmos/TransformGizmo.h"
-#include "Classes/Components/StaticMeshComponent.h"
+#include "Classes/Components/Mesh/StaticMeshComponent.h"
 #include "Components/SkySphereComponent.h"
 #include "Engine/FObjLoader.h"
 #include "Actors/HeightFogActor.h"
