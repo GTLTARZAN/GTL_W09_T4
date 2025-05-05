@@ -20,15 +20,12 @@
 #include "EditorRenderPass.h"
 #include "DepthPrePass.h"
 #include "TileLightCullingPass.h"
-#include <UObject/UObjectIterator.h>
-#include <UObject/Casts.h>
 
 #include "CompositingPass.h"
 #include "LightHeatMapRenderPass.h"
 #include "PostProcessCompositingPass.h"
 #include "ShadowManager.h"
 #include "ShadowRenderPass.h"
-#include "SlateRenderPass.h"
 #include "UnrealClient.h"
 #include "GameFrameWork/Actor.h"
 

@@ -21,8 +21,11 @@ struct FFBXLoader
     static void ParseFBX(FSkeletalMeshRenderData& SkeletonData);
     static void LoadSkeletalMesh(const FString& FilePath, FSkeletalMeshRenderData& OutSkeleton);
     static void ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMaterials);
+    static bool CreateTextureFromFile(const FWString& Filename, bool bIsSRGB);
 
 private:
+    inline static int GlobalSubsetMaterialIndex = 0;
+    
     inline static std::shared_ptr<FbxManager> FbxLoadManager{
         FbxManager::Create(),
         [](FbxManager* InManager) {InManager->Destroy();} //커스텀 삭제자

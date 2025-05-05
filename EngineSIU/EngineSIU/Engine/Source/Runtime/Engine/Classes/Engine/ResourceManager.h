@@ -35,6 +35,7 @@ public:
     static FStaticMeshRenderData* LoadStaticMeshAsset(const FString& PathFileName);
 
     static void CombineStaticMeshMaterialIndex(FStaticMeshRenderData& OutFStaticMesh);
+    
     static void CombineSkeletalMeshMaterialIndex(FSkeletalMeshRenderData& OutSkeletalMesh);
 
     static bool SaveStaticMeshToBinary(const FWString& FilePath, const FStaticMeshRenderData& StaticMesh);

@@ -7,7 +7,7 @@
 AXBotActor::AXBotActor()
 {
     SkeletalMeshComponent = AddComponent<USkeletalMeshComponent>(FName("SkeletalMeshComponent_0"));
-    SkeletalMeshComponent->SetSkeletalMesh(FResourceManager::GetSkeletalMesh(L"Contents/Fbx/XBot.fbx"));
+    SkeletalMeshComponent->SetSkeletalMesh(FResourceManager::GetSkeletalMesh(L"Contents/Fbx/TheBoss.fbx"));
     RootComponent = SkeletalMeshComponent;
 }
 

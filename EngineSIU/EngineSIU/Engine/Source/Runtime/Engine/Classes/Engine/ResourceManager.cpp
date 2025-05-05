@@ -545,13 +545,9 @@ FSkeletalMeshRenderData* FResourceManager::LoadSkeletalMeshAsset(const FString& 
     FFBXLoader::LoadSkeletalMesh(PathFileName, *NewSkeletalMesh);
     
     // Material
-    if (NewSkeletalMesh->MaterialSubsets.Num() > 0)
-    {
-        CombineSkeletalMeshMaterialIndex(*NewSkeletalMesh);
 
-        for (int materialIndex = 0; materialIndex < NewSkeletalMesh->Materials.Num(); materialIndex++) {
-            CreateMaterial(NewSkeletalMesh->Materials[materialIndex]);
-        }
+    for (auto Material : NewSkeletalMesh->Materials) {
+        CreateMaterial(Material);
     }
     
     // SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);

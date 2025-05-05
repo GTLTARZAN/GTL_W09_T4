@@ -137,10 +137,10 @@ FMatrix FQuat::ToMatrix() const
     const float yy = Y * y2;   const float yz = Y * z2;   const float zz = Z * z2;
     const float wx = W * x2;   const float wy = W * y2;   const float wz = W * z2;
 
-    R.M[0][0] = 1.0f - (yy + zz);    R.M[1][0] = xy - wz;                R.M[2][0] = xz + wy;            R.M[3][0] = 0.0f;
-    R.M[0][1] = xy + wz;            R.M[1][1] = 1.0f - (xx + zz);        R.M[2][1] = yz - wx;            R.M[3][1] = 0.0f;
-    R.M[0][2] = xz - wy;            R.M[1][2] = yz + wx;				R.M[2][2] = 1.0f - (xx + yy);	R.M[3][2] = 0.0f;
-    R.M[0][3] = 0.0f;				R.M[1][3] = 0.0f;					R.M[2][3] = 0.0f;
+    R.M[0][0] = 1.0f - (yy + zz);    R.M[1][0] = xy - wz;                   R.M[2][0] = xz + wy;            R.M[3][0] = 0.0f;
+    R.M[0][1] = xy + wz;            R.M[1][1] = 1.0f - (xx + zz);           R.M[2][1] = yz - wx;            R.M[3][1] = 0.0f;
+    R.M[0][2] = xz - wy;            R.M[1][2] = yz + wx;		            R.M[2][2] = 1.0f - (xx + yy);	R.M[3][2] = 0.0f;
+    R.M[0][3] = 0.0f;				R.M[1][3] = 0.0f;			            R.M[2][3] = 0.0f;               R.M[3][3] = 1.0f;
 
     return R;
 }

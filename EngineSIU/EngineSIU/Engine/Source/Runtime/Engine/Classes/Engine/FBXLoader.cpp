@@ -61,9 +61,32 @@ void FFBXLoader::ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMate
         FbxSurfaceMaterial* Mat = Node->GetMaterial(i);
         if (!Mat) continue;
 
+        FString MatName = FString(Mat->GetName());
+
+        bool bIsFind = false;
+        
+        for (auto SkeletonMaterial: OutMaterials)
+        {
+            //TODO: ㅎㅐ쉬로 검사
+            if (MatName == SkeletonMaterial.MaterialName)
+            {
+                //이미 있으면 continue
+                bIsFind = true;
+                break;
+            }
+        }
+
+        if (bIsFind)
+        {
+            continue;
+        }
+        
         FObjMaterialInfo MatInfo;
         MatInfo.MaterialName = Mat->GetName();
         
+        constexpr uint32 TexturesNum = static_cast<uint32>(EMaterialTextureSlots::MTS_MAX);
+        MatInfo.TextureInfos.SetNum(TexturesNum);
+
         int Slot = 0;
 
         // Diffuse Color
@@ -96,14 +119,33 @@ void FFBXLoader::ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMate
         {
             FbxTexture* Tex = DiffuseProp.GetSrcObject<FbxTexture>(t);
             FbxFileTexture* FileTex = FbxCast<FbxFileTexture>(Tex);
-            if (FileTex)
+            FWString FilePath = FString(FileTex->GetFileName()).ToWideString();
+            if (FileTex && CreateTextureFromFile(FilePath, true))
             {
+                MatInfo.TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Diffuse);
                 Slot = static_cast<int>(EMaterialTextureSlots::MTS_Diffuse);
-                MatInfo.TextureInfos[Slot].TexturePath = FString(FileTex->GetFileName()).ToWideString();
+                MatInfo.TextureInfos[Slot].TexturePath = FilePath;
                 break; // 여러개면 첫 번째만
             }
         }
-
+        
+        // Specular Texture
+        int SpecularTexCount = SpecularProp.GetSrcObjectCount<FbxTexture>();
+        
+        for (int t = 0; t < SpecularTexCount; ++t)
+        {
+            FbxTexture* Tex = SpecularProp.GetSrcObject<FbxTexture>(t);
+            FbxFileTexture* FileTex = FbxCast<FbxFileTexture>(Tex);
+            FWString FilePath = FString(FileTex->GetFileName()).ToWideString();
+            if (FileTex && CreateTextureFromFile(FilePath, true))
+            {
+                MatInfo.TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Specular);
+                Slot = static_cast<int>(EMaterialTextureSlots::MTS_Specular);
+                MatInfo.TextureInfos[Slot].TexturePath = FilePath;
+                break; // 여러개면 첫 번째만
+            }
+        }
+        
         // Normal Texture (Bump)
         FbxProperty BumpProp = Mat->FindProperty(FbxSurfaceMaterial::sNormalMap);
         if (!BumpProp.IsValid())
@@ -113,10 +155,12 @@ void FFBXLoader::ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMate
         {
             FbxTexture* Tex = BumpProp.GetSrcObject<FbxTexture>(t);
             FbxFileTexture* FileTex = FbxCast<FbxFileTexture>(Tex);
-            if (FileTex)
+            FWString FilePath = FString(FileTex->GetFileName()).ToWideString();
+            if (FileTex && CreateTextureFromFile(FilePath, true))
             {
+                MatInfo.TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Normal);
                 Slot = static_cast<int>(EMaterialTextureSlots::MTS_Normal);
-                MatInfo.TextureInfos[Slot].TexturePath = FString(FileTex->GetFileName()).ToWideString();
+                MatInfo.TextureInfos[Slot].TexturePath = FilePath;
                 break;
             }
         }
@@ -125,7 +169,24 @@ void FFBXLoader::ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMate
     }
 }
 
-void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData)
+bool FFBXLoader::CreateTextureFromFile(const FWString& Filename, bool bIsSRGB)
+{
+    if (FEngineLoop::ResourceManager.GetTexture(Filename))
+    {
+        return true;
+    }
+
+    HRESULT hr = FEngineLoop::ResourceManager.LoadTextureFromFile(FEngineLoop::GraphicDevice.Device, Filename.c_str(), bIsSRGB);
+
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
 {
     FbxMesh* Mesh = Node->GetMesh();
     if (!Mesh) return;
@@ -142,7 +203,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData
     auto* BiNormal = Mesh->GetElementBinormal(0);
     
     for (int i = 0; i < VertexCount; ++i) {
-        auto& V = Vertices[i];
+        FSkinnedVertex& V = Vertices[i];
         FbxVector4 P = Mesh->GetControlPointAt(i);
         V.Location = FVector(P[0], P[1], P[2]);
 
@@ -169,7 +230,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData
         
         if (UVs) {
             FbxVector2 UV = UVs->GetDirectArray().GetAt(i);
-            V.UV = FVector2D(UV[0], UV[1]);
+            V.UV = FVector2D(UV[0], 1 - UV[1]);
         }
     }
 
@@ -183,8 +244,8 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData
             FbxCluster* Bone = Skin->GetCluster(c);
             int BoneIdx = -1;
             FString BoneName = Bone->GetLink()->GetName();
-            for (size_t b = 0; b < SkeletonaData.Skeleton.Bones.Num(); ++b)
-                if (SkeletonaData.Skeleton.Bones[b].BoneName == BoneName)
+            for (size_t b = 0; b < SkeletonData.Skeleton.Bones.Num(); ++b)
+                if (SkeletonData.Skeleton.Bones[b].BoneName == BoneName)
                     BoneIdx = (int)b;
             if (BoneIdx < 0) continue;
 
@@ -210,7 +271,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData
     
     int PolyCount = Mesh->GetPolygonCount();
     FbxLayerElementMaterial* MatElement = Mesh->GetElementMaterial();
-
+    
     // 머티리얼별로 임시 인덱스 버퍼
     TMap<int, TArray<uint32>> MaterialToIndices;
 
@@ -219,48 +280,63 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonaData
         int MatIdx = 0;
         if (MatElement && MatElement->GetMappingMode() == FbxLayerElement::eByPolygon)
             MatIdx = MatElement->GetIndexArray().GetAt(i);
-
+        
         int PolySize = Mesh->GetPolygonSize(i);
+        
         for (int j = 0; j < PolySize; ++j) {
             int GlobalIdx = Mesh->GetPolygonVertex(i, j);
             MaterialToIndices.FindOrAdd(MatIdx).Add(GlobalIdx);
         }
     }
 
+    uint32 IndexOffset = SkeletonData.Vertices.Num();
     // 2. 전체 Vertices/Indices 배열에 저장, MaterialSubset 정보 기록
-    SkeletonaData.Vertices = Vertices; // 컨트롤포인트 기반이므로 그대로 복사
-
-    SkeletonaData.Indices.Empty();
-    SkeletonaData.MaterialSubsets.Empty();
-
-    // 3. Material Name도 함께 기록
-    int MaterialCount = Node->GetMaterialCount();
+    SkeletonData.Vertices.Append(Vertices); // 컨트롤포인트 기반이므로 그대로 복사
 
     for (auto& Pair : MaterialToIndices) {
         int MatIdx = Pair.Key;
-        const TArray<uint32>& SubIndices = Pair.Value;
+        TArray<uint32>& SubIndices = Pair.Value;
 
+        for (auto& index : SubIndices)
+        {
+            index += IndexOffset;
+        }
+        
         FMaterialSubset Subset;
-        Subset.MaterialIndex = MatIdx;
-        Subset.IndexStart = SkeletonaData.Indices.Num();
+        Subset.IndexStart = SkeletonData.Indices.Num();
         Subset.IndexCount = SubIndices.Num();
-
+        
         // MaterialName 할당
-        if (MatIdx >= 0 && MatIdx < MaterialCount) {
-            FbxSurfaceMaterial* Mat = Node->GetMaterial(MatIdx);
-            if (Mat)
-                Subset.MaterialName = FString(Mat->GetName());
-            else
-                Subset.MaterialName = TEXT("UnknownMaterial");
-        } else {
-            Subset.MaterialName = TEXT("UnknownMaterial");
+        FbxSurfaceMaterial* Mat = Node->GetMaterial(MatIdx);
+        FString MatName = FString(Mat->GetName());
+        if (Mat)
+        {
+            Subset.MaterialName = MatName;
         }
 
-        SkeletonaData.Indices.Append(SubIndices);
-        SkeletonaData.MaterialSubsets.Add(Subset);
+        bool bIsFind = false;
+        
+        for (auto SkeletonSubset : SkeletonData.MaterialSubsets)
+        {
+            //Todo: hash로 비교
+            if (MatName == SkeletonSubset.MaterialName)
+            {
+                Subset.MaterialIndex = SkeletonSubset.MaterialIndex;
+                bIsFind = true;
+                break;
+            }
+        }
+
+        if (bIsFind == false)
+        {
+            Subset.MaterialIndex = GlobalSubsetMaterialIndex++;
+        }
+
+        SkeletonData.Indices.Append(SubIndices);
+        SkeletonData.MaterialSubsets.Add(Subset);
     }
 
-    ParseMaterials(Node, SkeletonaData.Materials);
+    ParseMaterials(Node, SkeletonData.Materials);
 }
 
 void FFBXLoader::TraverseNodes(FbxNode* Node, FSkeletalMeshRenderData& SkeletalMeshData)
@@ -277,6 +353,10 @@ void FFBXLoader::TraverseNodes(FbxNode* Node, FSkeletalMeshRenderData& SkeletalM
 
 void FFBXLoader::ParseFBX(FSkeletalMeshRenderData& SkeletonaData)
 {
+    FbxGeometryConverter Converter(FbxLoadScene->GetFbxManager());
+    Converter.Triangulate(FbxLoadScene.get(), true);
+    GlobalSubsetMaterialIndex = 0;
+    
     // 1. 스켈레톤 파싱
     ParseSkeleton(SkeletonaData.Skeleton);
 
@@ -293,6 +373,6 @@ void FFBXLoader::LoadSkeletalMesh(const FString& FilePath, FSkeletalMeshRenderDa
     }
     
     importer->Import(FbxLoadScene.get());
-
+    
     ParseFBX(OutSkeleton);
 }
