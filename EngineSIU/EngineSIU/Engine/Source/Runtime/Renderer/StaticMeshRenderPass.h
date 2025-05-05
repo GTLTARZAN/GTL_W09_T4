@@ -13,7 +13,7 @@ class UWorld;
 class UMaterial;
 class FEditorViewportClient;
 class UStaticMeshComponent;
-struct FStaticMaterial;
+struct FMaterial;
 class FShadowRenderPass;
 
 class FStaticMeshRenderPass : public FMeshRenderPassBase
@@ -32,7 +32,7 @@ public:
 
     virtual void RenderAllStaticMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport);
 
-    void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
+    void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
     
     void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const override;
 

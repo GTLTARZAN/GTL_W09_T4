@@ -20,7 +20,7 @@ public:
     void SetEmissive(const FVector& EmissiveIn) { materialInfo.EmissiveColor = EmissiveIn; }
 
     // 스칼라 속성 설정자
-    void SetSpecularPower(float SpecularPowerIn) { materialInfo.SpecularExponent = SpecularPowerIn; }
+    void SetSpecularPower(float SpecularPowerIn) { materialInfo.Shiness = SpecularPowerIn; }
     void SetOpticalDensity(float DensityIn) { materialInfo.IOR = DensityIn; }
     void SetTransparency(float TransparencyIn) {
         materialInfo.Transparency = TransparencyIn;

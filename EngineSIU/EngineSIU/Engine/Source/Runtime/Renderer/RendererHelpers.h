@@ -29,7 +29,7 @@ namespace MaterialUtils
         Data.DiffuseColor = MaterialInfo.DiffuseColor;
         
         Data.SpecularColor = MaterialInfo.SpecularColor;
-        Data.Shininess = MaterialInfo.SpecularExponent;
+        Data.Shininess = MaterialInfo.Shiness;
         
         Data.EmissiveColor = MaterialInfo.EmissiveColor;
         Data.Transparency = MaterialInfo.Transparency;

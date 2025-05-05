@@ -34,7 +34,7 @@ struct FMaterialSubset
     FString MaterialName; // Material Name
 };
 
-struct FStaticMaterial
+struct FMaterial
 {
     class UMaterial* Material;
     FName MaterialSlotName;
@@ -117,7 +117,7 @@ struct FObjMaterialInfo
     FVector AmbientColor = FVector(0.01f, 0.01f, 0.01f);   // Ka: Ambient Color
     FVector EmissiveColor = FVector::ZeroVector;                   // Ke: Emissive Color
 
-    float SpecularExponent = 250.f;                                // Ns: Specular Power
+    float Shiness = 250.f;                                // Ns: Specular Power
     float IOR = 1.5f;                                              // Ni: Index of Refraction
     float Transparency = 0.f;                                      // d or Tr: Transparency of surface
     float BumpMultiplier = 1.f;                                    // -bm: Bump Multiplier

@@ -52,7 +52,6 @@ void FMeshRenderPassBase::InitializeShadowManager(FShadowManager* InShadowManage
     ShadowManager = InShadowManager;
 }
 
-
 void FMeshRenderPassBase::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     const EViewModeIndex ViewMode = Viewport->GetViewMode();

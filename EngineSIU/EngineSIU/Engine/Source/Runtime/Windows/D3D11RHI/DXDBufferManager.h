@@ -45,6 +45,8 @@ public:
 
     template<typename T>
     HRESULT CreateDynamicVertexBuffer(const FString& KeyName, const TArray<T>& vertices, FVertexInfo& OutVertexInfo);
+    template<typename T>
+    HRESULT CreateDynamicVertexBuffer(const FWString& KeyName, const TArray<T>& vertices, FVertexInfo& OutVertexInfo);
 
     // 템플릿 헬퍼 함수: 내부에서 버퍼 생성 로직 통합
     template<typename T>
@@ -117,6 +119,7 @@ HRESULT FDXDBufferManager::CreateVertexBufferInternal(const FString& KeyName, co
         OutVertexInfo = VertexBufferPool[KeyName];
         return S_OK;
     }
+    
     uint32_t Stride = sizeof(T);
     D3D11_BUFFER_DESC bufferDesc = {};
     bufferDesc.Usage = usage;
@@ -250,6 +253,12 @@ HRESULT FDXDBufferManager::CreateVertexBuffer(const FWString& KeyName, const TAr
 
 template<typename T>
 HRESULT FDXDBufferManager::CreateDynamicVertexBuffer(const FString& KeyName, const TArray<T>& vertices, FVertexInfo& OutVertexInfo)
+{
+    return CreateVertexBufferInternal(KeyName, vertices, OutVertexInfo, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+}
+
+template<typename T>
+HRESULT FDXDBufferManager::CreateDynamicVertexBuffer(const FWString& KeyName, const TArray<T>& vertices, FVertexInfo& OutVertexInfo)
 {
     return CreateVertexBufferInternal(KeyName, vertices, OutVertexInfo, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 }

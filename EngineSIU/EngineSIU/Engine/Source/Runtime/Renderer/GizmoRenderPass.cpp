@@ -258,7 +258,7 @@ void FGizmoRenderPass::RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, cons
             }
             else
             {
-                TArray<FStaticMaterial*> Materials = GizmoComp->GetStaticMesh()->GetMaterials();
+                TArray<FMaterial*> Materials = GizmoComp->GetStaticMesh()->GetMaterials();
                 MaterialUtils::UpdateMaterial(BufferManager, Graphics, Materials[MaterialIndex]->Material->GetMaterialInfo());
             }
 

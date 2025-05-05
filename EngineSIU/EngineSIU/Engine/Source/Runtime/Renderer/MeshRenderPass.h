@@ -47,8 +47,6 @@ public:
     void ChangeViewMode(EViewModeIndex ViewMode);
 
 protected:
-
-
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
     FDXDShaderManager* ShaderManager;

@@ -32,7 +32,7 @@
 #include "Actors/AmbientLightActor.h"
 
 #include "Actors/CubeActor.h"
-#include "Actors/SphereActor.h"
+#include "Actors/XBotActor.h"
 #include "Actors/CapsuleActor.h"
 #include "GameFramework/PlayerController.h"
 #include "Contents/Actors/Fish.h"
@@ -184,7 +184,7 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
                 {
                     std::cout << FileName << '\n';
 
-                    if (FObjManager::CreateStaticMesh(FileName) == nullptr)
+                    if (FResourceManager::CreateStaticMesh(FileName) == nullptr)
                     {
                         tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
                     }
@@ -327,6 +327,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             {.Label = "GoalPlatform", .OBJ = OBJ_GOALPLATFORM},
             {.Label = "Coin", .OBJ = OBJ_COIN},
             {.Label = "TriggerBox", .OBJ = OBJ_TRIGGERBOX},
+            {.Label = "XBot", .OBJ = OBJ_XBOT},
         };
 
         for (const auto& primitive : primitives)
@@ -342,7 +343,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<AActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SPHERE"));
                     USphereComp* SphereComp = SpawnedActor->AddComponent<USphereComp>();
-                    SphereComp->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Sphere.obj"));
+                    SphereComp->SetStaticMesh(FResourceManager::GetStaticMesh(L"Contents/Sphere.obj"));
                     break;
                 }
                 case OBJ_CUBE:
@@ -423,7 +424,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 }
                 case OBJ_SPHERE_COLLISION:
                 {
-                    SpawnedActor = World->SpawnActor<ASphereActor>();
+                    SpawnedActor = World->SpawnActor<AXBotActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SPHERE_COLLISION"));
                     SpawnedActor->SetActorTickInEditor(true); // TODO: 콜리전 테스트 용도
                     break;
@@ -454,6 +455,10 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 case OBJ_TRIGGERBOX:
                     SpawnedActor = World->SpawnActor<ATriggerBox>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_TRIGGERBOX"));
+                    break;
+                case OBJ_XBOT:
+                    SpawnedActor = World->SpawnActor<AXBotActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_XBOT"));
                     break;
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:

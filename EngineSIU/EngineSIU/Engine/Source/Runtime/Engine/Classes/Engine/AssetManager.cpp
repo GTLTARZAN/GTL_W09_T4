@@ -33,6 +33,7 @@ void UAssetManager::InitAssetManager()
     AssetRegistry = std::make_unique<FAssetRegistry>();
 
     LoadObjFiles();
+    LoadFbxFiles();
 }
 
 const TMap<FName, FAssetInfo>& UAssetManager::GetAssetRegistry()
@@ -45,7 +46,6 @@ void UAssetManager::LoadObjFiles()
     const std::string BasePathName = "Contents/";
 
     // Obj 파일 로드
-    
     for (const auto& Entry : std::filesystem::recursive_directory_iterator(BasePathName))
     {
         if (Entry.is_regular_file() && Entry.path().extension() == ".obj")
@@ -59,9 +59,32 @@ void UAssetManager::LoadObjFiles()
             AssetRegistry->PathNameToAssetInfo.Add(NewAssetInfo.AssetName, NewAssetInfo);
             
             FString MeshName = NewAssetInfo.PackagePath.ToString() + "/" + NewAssetInfo.AssetName.ToString();
-            FObjManager::CreateStaticMesh(MeshName);
+            FResourceManager::CreateStaticMesh(MeshName);
             // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
             // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
+        }
+    }
+}
+
+void UAssetManager::LoadFbxFiles()
+{
+    const std::string BasePathName = "Contents/";
+
+    // Obj 파일 로드
+    for (const auto& Entry : std::filesystem::recursive_directory_iterator(BasePathName))
+    {
+        if (Entry.is_regular_file() && Entry.path().extension() == ".fbx")
+        {
+            FAssetInfo NewAssetInfo;
+            NewAssetInfo.AssetName = FName(Entry.path().filename().string());
+            NewAssetInfo.PackagePath = FName(Entry.path().parent_path().string());
+            NewAssetInfo.AssetType = EAssetType::StaticMesh; // obj 파일은 무조건 StaticMesh
+            NewAssetInfo.Size = static_cast<uint32>(file_size(Entry.path()));
+            
+            AssetRegistry->PathNameToAssetInfo.Add(NewAssetInfo.AssetName, NewAssetInfo);
+            
+            FString MeshName = NewAssetInfo.PackagePath.ToString() + "/" + NewAssetInfo.AssetName.ToString();
+            FResourceManager::LoadSkeletalMesh(MeshName);
         }
     }
 }

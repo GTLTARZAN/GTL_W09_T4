@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/HAL/PlatformType.h"
-#include "Engine/ResourceMgr.h"
+#include "Engine/ResourceManager.h"
 #include "LevelEditor/SlateAppMessageHandler.h"
 #include "Renderer/Renderer.h"
 #include "UnrealEd/PrimitiveDrawBatch.h"
@@ -42,7 +42,7 @@ public:
     static FGraphicsDevice GraphicDevice;
     static FRenderer Renderer;
     static UPrimitiveDrawBatch PrimitiveDrawBatch;
-    static FResourceMgr ResourceManager;
+    static FResourceManager ResourceManager;
     static uint32 TotalAllocationBytes;
     static uint32 TotalAllocationCount;
 

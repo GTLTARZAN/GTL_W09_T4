@@ -17,7 +17,7 @@ void AItemActor::PostSpawnInitialize()
     SetRootComponent(SphereComponent);
 
     MeshComponent = AddComponent<UStaticMeshComponent>(FName("MeshComponent_0"));
-    MeshComponent->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Coin2/Coin2.obj"));
+    MeshComponent->SetStaticMesh(FResourceManager::GetStaticMesh(L"Contents/Coin2/Coin2.obj"));
     MeshComponent->SetupAttachment(RootComponent);
 }
 

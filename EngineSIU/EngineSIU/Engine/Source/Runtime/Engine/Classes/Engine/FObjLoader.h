@@ -1,12 +1,11 @@
 #pragma once
 
 #include "EngineLoop.h"
-#include "Container/Map.h"
 #include "HAL/PlatformType.h"
 #include "Serialization/Serializer.h"
 
 class UStaticMesh;
-struct FObjManager;
+class FResourceManager;
 
 struct FStaticMeshVertex;
 struct FStaticMeshRenderData;
@@ -28,37 +27,4 @@ struct FObjLoader
 
 private:
     static void CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticMeshVertex& Vertex1, const FStaticMeshVertex& Vertex2);
-};
-
-struct FObjManager
-{
-public:
-    static FStaticMeshRenderData* LoadObjStaticMeshAsset(const FString& PathFileName);
-
-    static void CombineMaterialIndex(FStaticMeshRenderData& OutFStaticMesh);
-
-    static bool SaveStaticMeshToBinary(const FWString& FilePath, const FStaticMeshRenderData& StaticMesh);
-
-    static bool LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMeshRenderData& OutStaticMesh);
-
-    static UMaterial* CreateMaterial(FObjMaterialInfo materialInfo);
-
-    static TMap<FString, UMaterial*>& GetMaterials() { return MaterialMap; }
-
-    static UMaterial* GetMaterial(FString name);
-
-    static int GetMaterialNum() { return MaterialMap.Num(); }
-
-    static UStaticMesh* CreateStaticMesh(const FString& filePath);
-
-    static const TMap<FWString, UStaticMesh*>& GetStaticMeshes() { return StaticMeshMap; }
-
-    static UStaticMesh* GetStaticMesh(FWString name);
-
-    static int GetStaticMeshNum() { return StaticMeshMap.Num(); }
-
-private:
-    inline static TMap<FString, FStaticMeshRenderData*> ObjStaticMeshMap;
-    inline static TMap<FWString, UStaticMesh*> StaticMeshMap;
-    inline static TMap<FString, UMaterial*> MaterialMap;
 };

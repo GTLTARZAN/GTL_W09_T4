@@ -1,33 +1,17 @@
 #include "SkeletalMeshRenderPass.h"
-
-#include <array>
-
 #include "EngineLoop.h"
 #include "World/World.h"
-
 #include "RendererHelpers.h"
 #include "ShadowManager.h"
-#include "ShadowRenderPass.h"
-#include "UnrealClient.h"
-#include "Math/JungleMath.h"
-
-#include "UObject/UObjectIterator.h"
-#include "UObject/Casts.h"
-
-#include "D3D11RHI/DXDBufferManager.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDShaderManager.h"
-
-// #include "Components/SkeletalMesh/SkeletalMeshComponent"
-
 #include "BaseGizmos/GizmoBaseComponent.h"
-#include "Engine/EditorEngine.h"
-
-#include "PropertyEditor/ShowFlags.h"
-
+#include "Components/SkeletalMeshComponent.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "Components/Light/PointLightComponent.h"
-#include "Contents/Actors/Fish.h"
+#include "Components/Mesh/SkeletalMesh.h"
+#include "Engine/EditorEngine.h"
+#include "PropertyEditor/ShowFlags.h"
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
     : FMeshRenderPassBase()
@@ -43,16 +27,16 @@ FSkeletalMeshRenderPass::~FSkeletalMeshRenderPass()
 void FSkeletalMeshRenderPass::PrepareRenderArr()
 {
     // TODO SkeletalMesh 에 관한 내용 기입 필요 아래는 StaticMesh 예시
-    /*for (const auto iter : TObjectRange<UStaticMeshComponent>())
+    for (const auto iter : TObjectRange<USkeletalMeshComponent>())
     {
-        if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
+        if (iter->GetWorld() == GEngine->ActiveWorld)
         {
             if (iter->GetOwner() && !iter->GetOwner()->IsHidden())
             {
-                StaticMeshComponents.Add(iter);
+                SkeletalMeshComponents.Add(iter);
             }
         }
-    }*/
+    }
 }
 
 void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -99,43 +83,40 @@ void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient
 
 void FSkeletalMeshRenderPass::ClearRenderArr()
 {
-    // TODO SkeletalMeshCOmponents Empty 필요
-    //StaticMeshComponents.Empty();
+    SkeletalMeshComponents.Empty();
 }
 
 void FSkeletalMeshRenderPass::RenderAllSkeletalMeshesForPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport, UPointLightComponent*& PointLight)
 {
     // TODO Skeletal 로 아래 내용 교체 필요
+    
+    for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
+    {
+        if (!Comp || !Comp->GetSkeletalMesh()) { continue; }
 
-    //for (UStaticMeshComponent* Comp : StaticMeshComponents)
-    //{
-    //    if (!Comp || !Comp->GetStaticMesh()) { continue; }
+        FSkeletalMeshRenderData* RenderData = Comp->GetSkeletalMesh()->GetRenderData();
+        if (RenderData == nullptr) { continue; }
 
-    //    FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
-    //    if (RenderData == nullptr) { continue; }
+        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
-    //    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
 
-    //    FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        //ShadowRenderPass->UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
 
-    //    //ShadowRenderPass->UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
-
-    //    RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
-    //}
+        RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+    }
 }
 
 void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    // TODO 아래 StaticMesh 내용 대신에 SkeletalMesh 내용 넣기
-
-    /*for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
     {
-        if (!Comp || !Comp->GetStaticMesh())
+        if (!Comp || !Comp->GetSkeletalMesh())
         {
             continue;
         }
 
-        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        FSkeletalMeshRenderData* RenderData = Comp->GetSkeletalMesh()->GetRenderData();
         if (RenderData == nullptr)
         {
             continue;
@@ -157,45 +138,30 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
             TargetComponent = SelectedActor->GetRootComponent();
         }
 
+        //TODO: WorldMatrix 이거 노드 타고가면서 부모 역변환이랑 전부 해서 렌더   
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
         FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
         const bool bIsSelected = (Engine && TargetComponent == Comp);
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
 
-#pragma region W08
-        FDiffuseMultiplier DM = {};
-        DM.DiffuseMultiplier = 0.f;
-        if (AFish* Fish = Cast<AFish>(Comp->GetOwner()))
-        {
-            if (!Fish->IsDead())
-            {
-                DM.DiffuseMultiplier = 1.f - Fish->GetHealthPercent();
-            }
-        }
-        DM.DiffuseOverrideColor = FVector(0.55f, 0.45f, 0.067f);
-        BufferManager->UpdateConstantBuffer(TEXT("FDiffuseMultiplier"), DM);
-#pragma endregion W08
-
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+        RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
 
         if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
             FEngineLoop::PrimitiveDrawBatch.AddAABBToBatch(Comp->GetBoundingBox(), Comp->GetWorldLocation(), WorldMatrix);
         }
-    }*/
+    }
 }
 
-void FSkeletalMeshRenderPass::RenderPrimitive(FSkeletalMeshRenderData* RenderData, TArray<FSkeletalMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FSkeletalMeshRenderPass::RenderPrimitive(FSkeletalMeshRenderData* RenderData, TArray<FMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
-    // TODO 아래 StaticMesh 내용 Skeletal로 교체하여 작업 필요
-
-    /*UINT Stride = sizeof(FStaticMeshVertex);
+    UINT Stride = sizeof(FSkinnedVertex);
     UINT Offset = 0;
 
     FVertexInfo VertexInfo;
-    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
-
+    BufferManager->CreateDynamicVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
+    
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
 
     FIndexInfo IndexInfo;
@@ -231,7 +197,7 @@ void FSkeletalMeshRenderPass::RenderPrimitive(FSkeletalMeshRenderData* RenderDat
         uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
         uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount;
         Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
-    }*/
+    }
 }
 
 void FSkeletalMeshRenderPass::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
@@ -254,5 +220,3 @@ void FSkeletalMeshRenderPass::RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT 
     Graphics->DeviceContext->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     Graphics->DeviceContext->DrawIndexed(numIndices, 0, 0);
 }
-
-

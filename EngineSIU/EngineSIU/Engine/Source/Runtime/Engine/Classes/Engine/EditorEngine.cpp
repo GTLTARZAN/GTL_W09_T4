@@ -9,8 +9,6 @@
 #include "Components/Light/DirectionalLightComponent.h"
 #include "UObject/UObjectIterator.h"
 
-#include <fbxsdk.h>
-
 namespace PrivateEditorSelection
 {
     static AActor* GActorSelected = nullptr;

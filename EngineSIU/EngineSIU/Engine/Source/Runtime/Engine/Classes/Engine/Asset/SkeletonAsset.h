@@ -1,53 +1,74 @@
 ﻿#pragma once
+#include "Define.h"
+#include "Container/Array.h"
 #include "Math/Matrix.h"
+#include "Math/Quat.h"
 
-struct Bone
+struct FSkinnedVertex
+{
+    FVector Location;
+    FVector Normal;
+    FVector2D UV;
+    FVector4 Tangent;
+    uint16 BoneIndex[4] = {0,};
+    float BoneWeight[4] = {0,};
+    uint32 MaterialIndex = 0;
+};
+
+struct FBone
 {
     FMatrix InvBindPose;
-    FMatrix SkinningMatrix;
-    const char* BoneName;
-    uint8 ParentIndex; //루트일 경우 0xff
+    // FMatrix SkinningMatrix;
+    FString BoneName;
+    uint16 ParentIndex = 0XFFFF; //루트일 경우 0xff
 };
 
-struct Skeleton
+struct FSkeleton
 {
-    uint32 NumBones;
-    Bone* Bones;
+    uint16 SkeletonIndex = 0;
+    TArray<FBone> Bones;
 };
 
-struct BonePose
+struct FBonePose
 {
     FQuat Rotation;
     FVector Location;
     FVector Scale;
 };
 
-struct SkeletionPose
+struct FSkeletalPose
 {
-    Skeleton* Skeleton;
-    BonePose* LocalPose;
+    FSkeleton* Skeleton;
+    FBonePose* LocalPose;
     FMatrix GlobalPose;
 };
 
-struct AnimationSample
+struct FAnimationSample
 {
-    BonePose* BonePoses;
+    TArray<FBonePose> BonePoses;
 };
 
-struct AnimationClip
+struct FAnimationClip
 {
-    Skeleton* Skeleton;
+    FSkeleton* Skeleton;
     float FramesPerSecond;
     uint32 FrameNum;
-    AnimationClip* Samples;
+    TArray<FAnimationSample> Samples;
     bool bIsLooping;
 };
 
-struct SkinnedVertex
+struct FSkeletalMeshRenderData
 {
-    FVector Location;
-    FVector Normal;
-    FVector2D UV;
-    uint8 BoneIndex[4];
-    float BoneWeight[4];
+    FWString ObjectName;
+    FSkeleton Skeleton;
+    
+    TArray<FSkinnedVertex> Vertices;
+    TArray<uint32> Indices;
+    TArray<FSkeletalPose> Poses;
+
+    TArray<FObjMaterialInfo> Materials;
+    TArray<FMaterialSubset> MaterialSubsets;
+
+    FVector BoundingBoxMin;
+    FVector BoundingBoxMax;
 };

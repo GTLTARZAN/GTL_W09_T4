@@ -16,7 +16,7 @@ void UFishBodyComponent::InitializeComponent()
 {
     UStaticMeshComponent::InitializeComponent();
 
-    SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Fish/Fish_Front.obj"));
+    SetStaticMesh(FResourceManager::GetStaticMesh(L"Contents/Fish/Fish_Front.obj"));
     SetRelativeLocation(FVector(-0.5f, 0.f, 0.f));
     SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 }

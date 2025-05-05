@@ -192,7 +192,7 @@ void FShadowRenderPass::SetLightData(const TArray<class UPointLightComponent*>& 
     SpotLights = InSpotLights;
 }
 
-void FShadowRenderPass::RenderPrimitive(FStaticMeshRenderData* RenderData, const TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int32 SelectedSubMeshIndex)
+void FShadowRenderPass::RenderPrimitive(FStaticMeshRenderData* RenderData, const TArray<FMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int32 SelectedSubMeshIndex)
 {
     UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;

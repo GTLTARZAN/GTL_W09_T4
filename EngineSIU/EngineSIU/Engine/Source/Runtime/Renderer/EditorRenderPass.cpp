@@ -349,7 +349,7 @@ void FEditorRenderPass::LazyLoad()
     Resources.IconTextures[IconType::AtmosphericFog] = FEngineLoop::ResourceManager.GetTexture(L"Assets/Editor/Icon/AtmosphericFog_64.png");
 
     // Gizmo arrow 로드
-    FStaticMeshRenderData* RenderData = FObjManager::GetStaticMesh(L"Assets/GizmoTranslationZ.obj")->GetRenderData();
+    FStaticMeshRenderData* RenderData = FResourceManager::GetStaticMesh(L"Assets/GizmoTranslationZ.obj")->GetRenderData();
 
     FVertexInfo VertexInfo;
     BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);

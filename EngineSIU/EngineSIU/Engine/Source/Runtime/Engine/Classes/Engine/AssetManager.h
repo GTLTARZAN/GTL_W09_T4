@@ -47,4 +47,5 @@ public:
 
 private:
     void LoadObjFiles();
+    void LoadFbxFiles();
 };

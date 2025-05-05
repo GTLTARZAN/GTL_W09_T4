@@ -33,6 +33,8 @@ public:
     const T& operator[](SizeType Index) const;
     void operator+(const TArray& OtherArray);
 
+    void Append(const TArray& OtherArray);
+    
 public:
     ArrayType& GetContainerPrivate() { return ContainerPrivate; }
     const ArrayType& GetContainerPrivate() const { return ContainerPrivate; }
@@ -172,6 +174,12 @@ const T& TArray<T, Allocator>::operator[](SizeType Index) const
 
 template <typename T, typename Allocator>
 void TArray<T, Allocator>::operator+(const TArray& OtherArray)
+{
+    ContainerPrivate.insert(end(), OtherArray.begin(), OtherArray.end());
+}
+
+template <typename T, typename Allocator>
+void TArray<T, Allocator>::Append(const TArray& OtherArray)
 {
     ContainerPrivate.insert(end(), OtherArray.begin(), OtherArray.end());
 }

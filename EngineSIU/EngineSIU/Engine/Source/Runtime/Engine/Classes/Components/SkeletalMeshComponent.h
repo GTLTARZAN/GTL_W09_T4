@@ -1,18 +1,17 @@
 #pragma once
 #include "Components/MeshComponent.h"
-#include "Mesh/StaticMesh.h"
+#include "Engine/Asset/SkeletonAsset.h"
 
-#include "Engine/Asset/StaticMeshAsset.h"
+class USkeletalMesh;
 
-class UStaticMeshComponent : public UMeshComponent
+class USkeletalMeshComponent : public UMeshComponent
 {
-    DECLARE_CLASS(UStaticMeshComponent, UMeshComponent)
+    DECLARE_CLASS(USkeletalMeshComponent, UMeshComponent)
 
 public:
-    UStaticMeshComponent() = default;
+    USkeletalMeshComponent() = default;
 
     virtual UObject* Duplicate(UObject* InOuter) override;
-
     
     void GetProperties(TMap<FString, FString>& OutProperties) const override;
     
@@ -29,23 +28,11 @@ public:
 
     virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
     
-    UStaticMesh* GetStaticMesh() const { return StaticMesh; }
-    void SetStaticMesh(UStaticMesh* value)
-    { 
-        StaticMesh = value;
-        if (StaticMesh == nullptr)
-        {
-            OverrideMaterials.SetNum(0);
-            AABB = FBoundingBox(FVector::ZeroVector, FVector::ZeroVector);
-        }
-        else
-        {
-            OverrideMaterials.SetNum(value->GetMaterials().Num());
-            AABB = FBoundingBox(StaticMesh->GetRenderData()->BoundingBoxMin, StaticMesh->GetRenderData()->BoundingBoxMax);
-        }
-    }
-
+    USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
+    void SetSkeletalMesh(USkeletalMesh* value);
+    
 protected:
-    UStaticMesh* StaticMesh = nullptr;
     int selectedSubMeshIndex = -1;
+    USkeletalMesh* SkeletalMesh = nullptr;
+    TArray<FMaterial*> materials;
 };

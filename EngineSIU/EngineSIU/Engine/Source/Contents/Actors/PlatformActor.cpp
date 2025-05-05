@@ -9,6 +9,6 @@ APlatformActor::APlatformActor()
     RootComponent = BoxComponent;
 
     MeshComponent = AddComponent<UStaticMeshComponent>(FName("MeshComponent_0"));
-    MeshComponent->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Oil/Oil.obj"));
+    MeshComponent->SetStaticMesh(FResourceManager::GetStaticMesh(L"Contents/Oil/Oil.obj"));
     MeshComponent->SetupAttachment(BoxComponent);
 }
