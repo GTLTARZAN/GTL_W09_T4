@@ -156,7 +156,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
 
 void FSkeletalMeshRenderPass::RenderPrimitive(FSkeletalMeshRenderData* RenderData, TArray<FMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
-    UINT Stride = sizeof(FSkinnedVertex);
+    UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;
 
     FVertexInfo VertexInfo;

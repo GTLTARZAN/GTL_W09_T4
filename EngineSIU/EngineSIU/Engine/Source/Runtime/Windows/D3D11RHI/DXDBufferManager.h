@@ -142,6 +142,7 @@ HRESULT FDXDBufferManager::CreateVertexBufferInternal(const FString& KeyName, co
 
     return S_OK;
 }
+
 template<typename T>
 HRESULT FDXDBufferManager::CreateIndexBuffer(const FString& KeyName, const TArray<T>& indices, FIndexInfo& OutIndexInfo, D3D11_USAGE Usage, UINT CpuAccessFlags)
 {

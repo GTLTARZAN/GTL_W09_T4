@@ -4,6 +4,7 @@
 
 #include "Asset/SkeletonAsset.h"
 #include "Container/Array.h"
+#include "Container/Map.h"
 
 class USkeletalMesh;
 class FResourceManager;
@@ -24,7 +25,7 @@ struct FFBXLoader
     static bool CreateTextureFromFile(const FWString& Filename, bool bIsSRGB);
 
 private:
-    inline static int GlobalSubsetMaterialIndex = 0;
+    inline static TMap<std::string, uint32> VertexMap; // 중복 체크용
     
     inline static std::shared_ptr<FbxManager> FbxLoadManager{
         FbxManager::Create(),
