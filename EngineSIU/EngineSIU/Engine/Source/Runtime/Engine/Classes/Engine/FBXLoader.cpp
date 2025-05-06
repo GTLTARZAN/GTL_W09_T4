@@ -5,6 +5,7 @@
 #include "Container/String.h"
 #include "Define.h"
 #include "Asset/SkeletonAsset.h"
+#include "Asset/StaticMeshAsset.h"
 #include "Container/Map.h"
 #include "Renderer/SkeletalMeshRenderPass.h"
 
@@ -194,7 +195,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
     int VertexCount = Mesh->GetControlPointsCount();
 
     // 1. 정점 정보 추출 (공통)
-    TArray<FSkinnedVertex> Vertices;
+    TArray<FStaticMeshVertex> Vertices;
     Vertices.SetNum(VertexCount);
 
     auto* Normals = Mesh->GetElementNormal(0);
@@ -203,20 +204,20 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
     auto* BiNormal = Mesh->GetElementBinormal(0);
     
     for (int i = 0; i < VertexCount; ++i) {
-        FSkinnedVertex& V = Vertices[i];
+        FStaticMeshVertex& V = Vertices[i];
         FbxVector4 P = Mesh->GetControlPointAt(i);
-        V.Location = FVector(P[0], P[1], P[2]);
+        V.X = P[0]; V.Y = P[1]; V.Z = P[2];
 
         if (Normals)
         {
             FbxVector4 N = Normals->GetDirectArray().GetAt(i);
-            V.Normal = FVector(N[0], N[1], N[2]);
+            V.NormalX = N[0]; V.NormalY = N[1]; V.NormalZ = N[2];
         }
 
         if (Tangents)
         {
             FbxVector4 T = Tangents->GetDirectArray().GetAt(i);
-            V.Tangent = FVector(T[0], T[1], T[2]);
+            V.TangentX = T[0]; V.TangentY = T[1]; V.TangentZ = T[2];
         }
 
         if (BiNormal)
@@ -224,16 +225,18 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
             FbxVector4 B = BiNormal->GetDirectArray().GetAt(i);
             FVector BiTangent = FVector(B[0], B[1], B[2]).GetSafeNormal();
             
-            const float Sign = (FVector::DotProduct(FVector::CrossProduct(V.Normal, FVector(V.Tangent.X, V.Tangent.Y, V.Tangent.Z)), BiTangent) < 0.f) ? -1.f : 1.f;
-            V.Tangent.W = Sign;
+            const float Sign = (FVector::DotProduct(FVector::CrossProduct(FVector(V.NormalX, V.NormalY, V.NormalZ), FVector(V.TangentX, V.TangentY, V.TangentZ)), BiTangent) < 0.f) ? -1.f : 1.f;
+            V.TangentW = Sign;
         }
         
         if (UVs) {
             FbxVector2 UV = UVs->GetDirectArray().GetAt(i);
-            V.UV = FVector2D(UV[0], 1 - UV[1]);
+            V.U = UV[0]; V.V = 1 - UV[1];
         }
     }
 
+    TArray<FSkinnedVertex> SkinningData;
+    SkinningData.SetNum(VertexCount);
     // 스킨(본 가중치) 추출
     int DeformerCount = Mesh->GetDeformerCount(FbxDeformer::eSkin);
     if (DeformerCount > 0) {
@@ -256,7 +259,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
                 int VertIdx = Indices[k];
                 float Weight = (float)Weights[k];
                 // 가장 가중치가 낮은 슬롯에 할당
-                FSkinnedVertex& V = Vertices[VertIdx];
+                FSkinnedVertex& V = SkinningData[VertIdx];
                 for (int s = 0; s < 4; ++s) {
                     if (V.BoneWeight[s] < 1e-4f) {
                         //어떤 인덱스에 얼마만큼의 가중치를 줄지 저장

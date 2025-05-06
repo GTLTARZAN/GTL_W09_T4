@@ -1,18 +1,14 @@
 ﻿#pragma once
 #include "Define.h"
+#include "StaticMeshAsset.h"
 #include "Container/Array.h"
 #include "Math/Matrix.h"
 #include "Math/Quat.h"
 
 struct FSkinnedVertex
 {
-    FVector Location;
-    FVector Normal;
-    FVector2D UV;
-    FVector4 Tangent;
     uint16 BoneIndex[4] = {0,};
     float BoneWeight[4] = {0,};
-    uint32 MaterialIndex = 0;
 };
 
 struct FBone
@@ -62,7 +58,8 @@ struct FSkeletalMeshRenderData
     FWString ObjectName;
     FSkeleton Skeleton;
     
-    TArray<FSkinnedVertex> Vertices;
+    TArray<FStaticMeshVertex> Vertices;
+    TArray<FSkinnedVertex> SkinningData;
     TArray<uint32> Indices;
     TArray<FSkeletalPose> Poses;
 
