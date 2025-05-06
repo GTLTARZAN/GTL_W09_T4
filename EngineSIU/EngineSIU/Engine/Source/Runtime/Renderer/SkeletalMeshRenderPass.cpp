@@ -145,30 +145,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
         {
             TargetComponent = SelectedActor->GetRootComponent();
         }
-
-        
-        ///////////////////////////
-        //각 본의 skinning행렬 만들기
-        
-        FVector Translation = FVector::ZeroVector;
-        FRotator Rotation = FRotator(0, 50, 0);
-        
-        FMatrix BoneMoveMatrix = JungleMath::CreateModelMatrix(Translation, Rotation, FVector::OneVector);
-
-        for (FBone Bone : RenderData->Skeleton.Bones)
-        {
-            Bone.SkinningMatrix = BoneMoveMatrix * Bone.InvBindPose;
-            
-            FBone NowBone = Bone;
-            
-            while (NowBone.ParentIndex != 0xFFFF) //루트가 0xFFFF
-            {
-                NowBone = RenderData->Skeleton.Bones[NowBone.ParentIndex];
-                Bone.SkinningMatrix = Bone.SkinningMatrix * NowBone.InvBindPose;
-            }
-        } //각 뼈의 모델기준 
-        /////////////////////////////////////////
-        
+                
         //TODO: WorldMatrix 이거 노드 타고가면서 부모 역변환이랑 전부 해서 렌더   
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
         FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
@@ -191,11 +168,25 @@ void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
 {
     FBoneSkinningConstantBuffer SkinningMatrices;
 
+    ///////////////////////////
+    //각 본의 skinning행렬 만들기
+
     int i=0;
-    for (auto Bone : Bones)
+    for (FBone Bone : Bones)
     {
+        Bone.SkinningMatrix = JungleMath::CreateModelMatrix(Bone.Pose.Location, Bone.Pose.Rotation, Bone.Pose.Scale);
+            
+        FBone NowBone = Bone;
+        
+        while (NowBone.ParentIndex != 0xFFFF) //루트가 0xFFFF
+        {
+            NowBone = Bones[NowBone.ParentIndex];
+            Bone.SkinningMatrix = Bone.SkinningMatrix * JungleMath::CreateModelMatrix(NowBone.Pose.Location, NowBone.Pose.Rotation, NowBone.Pose.Scale);
+        }
+
         SkinningMatrices.BoneMatrices[i++] = Bone.SkinningMatrix;
-    }
+    } //각 뼈의 모델기준 
+    /////////////////////////////////////////
     
     BufferManager->UpdateConstantBuffer(TEXT("FBoneSkinningConstantBuffer"), SkinningMatrices);
 }

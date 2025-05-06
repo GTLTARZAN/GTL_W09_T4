@@ -47,8 +47,8 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
                 bone.ParentIndex = (uint16)j;
 
         // InvBindPose(역 바인드포즈) 구하기
-        FbxAMatrix bindPose = boneNode->EvaluateGlobalTransform();
-        bone.InvBindPose = FbxAMatrixToFMatrix(bindPose.Inverse().Transpose());
+        FbxAMatrix bindPose = boneNode->EvaluateLocalTransform();
+        bone.InvBindPose = FbxAMatrixToFMatrix(bindPose.Transpose().Inverse());
 
         OutSkeleton.Bones.Add(bone);
     }

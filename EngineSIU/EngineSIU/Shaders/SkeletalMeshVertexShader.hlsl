@@ -15,7 +15,7 @@ cbuffer MaterialConstants : register(b1)
 #endif
 
 cbuffer BoneInfo : register(b2){
-    matrix SkinningMatrix;
+    row_major matrix SkinningMatrix[512];
 }
 
 struct VS_INPUT_SkeletalMesh
@@ -25,16 +25,34 @@ struct VS_INPUT_SkeletalMesh
     float4 Tangent : TANGENT;
     float2 UV : TEXCOORD;
     uint MaterialIndex : MATERIAL_INDEX;
-    uint BoneIndex[4] : BONE_INDEX;
-    float BoneWeight[4] : BONE_WEIGHT;
+    uint4 BoneIndex : BONE_INDEX;
+    float4 BoneWeight : BONE_WEIGHT;
 };
 
 PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
 {
     PS_INPUT_StaticMesh Output;
 
-    Output.Position = float4(Input.Position, 1.0);
+    float4 ModelPos = float4(Input.Position, 1.0);
+    // Output.Position = ModelPos;
+
+    //Skinning곱해주기
+    float4 skinnedPos = float4(0,0,0,0);
+    for (int i = 0; i < 4; ++i)
+    {
+        if (Input.BoneIndex[i] == 0xFFFF)
+        {
+            continue;
+        }
+        int idx = Input.BoneIndex[i];
+        float weight = Input.BoneWeight[i];
+        float4 transformed = mul(ModelPos, SkinningMatrix[idx]);
+        skinnedPos += transformed * weight;
+    }
+    Output.Position = skinnedPos;
+
     Output.Position = mul(Output.Position, WorldMatrix);
+    
     Output.WorldPosition = Output.Position.xyz;
     
     Output.Position = mul(Output.Position, ViewMatrix);

@@ -11,13 +11,21 @@ struct FSkinnedVertex
     float TangentX, TangentY, TangentZ, TangentW;
     float U = 0, V = 0;
     uint32 MaterialIndex;
-    uint16 BoneIndex[4] = {0,};
+    uint32 BoneIndex[4] = {0,};
     float BoneWeight[4] = {0,};
+};
+
+struct FBonePose
+{
+    FRotator Rotation = FRotator::ZeroRotator;
+    FVector Location = FVector::ZeroVector;
+    FVector Scale = FVector::OneVector;
 };
 
 struct FBone
 {
     FMatrix InvBindPose;
+    FBonePose Pose;
     FMatrix SkinningMatrix;
     FString BoneName;
     uint16 ParentIndex = 0XFFFF; //루트일 경우 0xff
@@ -27,13 +35,6 @@ struct FSkeleton
 {
     uint16 SkeletonIndex = 0;
     TArray<FBone> Bones;
-};
-
-struct FBonePose
-{
-    FQuat Rotation;
-    FVector Location;
-    FVector Scale;
 };
 
 struct FSkeletalPose

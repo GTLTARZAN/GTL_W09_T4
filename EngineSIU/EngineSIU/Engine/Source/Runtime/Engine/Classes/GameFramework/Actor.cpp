@@ -5,7 +5,10 @@
 
 AActor::AActor()
 {
-    RootComponent = AddComponent<USceneComponent>();
+    if (RootComponent == nullptr)
+    {
+        RootComponent = AddComponent<USceneComponent>();
+    }
 }
 
 void AActor::PostSpawnInitialize()
