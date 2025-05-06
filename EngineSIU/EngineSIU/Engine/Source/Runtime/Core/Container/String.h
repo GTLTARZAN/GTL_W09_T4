@@ -290,7 +290,28 @@ public:
      * @return 포맷팅된 새로운 FString 객체.
      */
     static FString Printf(const ElementType* Format, ...);
+
+    uint32 GetTypeHash();
+private:
+    uint32 FNV1aHash(const char* Data, size_t Length);
 };
+
+FORCEINLINE uint32 FString::FNV1aHash(const char* Data, size_t Length)
+{
+    uint32 Hash = 2166136261u;
+    for (size_t i = 0; i < Length; ++i)
+    {
+        Hash ^= static_cast<uint8>(Data[i]);
+        Hash *= 16777619u;
+    }
+    return Hash;
+}
+
+FORCEINLINE uint32 FString::GetTypeHash()
+{
+    std::string Ansi = std::string(PrivateString); // 혹은 Str.ToString()
+    return FNV1aHash(Ansi.c_str(), Ansi.length());
+}
 
 template <typename Number>
 	requires std::is_integral_v<Number>

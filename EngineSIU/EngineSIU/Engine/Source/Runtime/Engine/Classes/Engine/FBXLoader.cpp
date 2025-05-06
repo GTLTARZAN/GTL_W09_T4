@@ -192,13 +192,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
     FbxMesh* Mesh = Node->GetMesh();
     if (!Mesh) return;
 
-    int VertexCount = Mesh->GetControlPointsCount();
-
     ParseMaterials(Node, SkeletonData.Materials);
-    
-    // 1. 정점 정보 추출 (공통)
-    TArray<FSkinnedVertex> Vertices;
-    Vertices.SetNum(VertexCount);
 
     int IndexStart = SkeletonData.Indices.Num();
 
@@ -206,8 +200,45 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
     const char* uvSetName = uvElem ? uvElem->GetName() : nullptr;
     int PolyCount = Mesh->GetPolygonCount();
 
-    FString SubMeshMaterial;
+
+    int cpCount = Mesh->GetControlPointsCount();
+    std::vector<std::vector<std::pair<int, double>>> cpWeights(cpCount);
+    for (int si = 0; si < Mesh->GetDeformerCount(FbxDeformer::eSkin); ++si)
+    {
+        FbxSkin* skin = static_cast<FbxSkin*>(Mesh->GetDeformer(si, FbxDeformer::eSkin));
+        for (int ci = 0; ci < skin->GetClusterCount(); ++ci)
+        {
+            FbxCluster* cluster = skin->GetCluster(ci);
+            FbxNode* boneNode = cluster->GetLink();
+            if (!boneNode) continue;
+
+            // boneNode 이름 → skeleton 에서 인덱스 찾기
+            FString boneName = FString(boneNode->GetName());
+            int boneIndex = INDEX_NONE;
+            for (int b = 0; b < SkeletonData.Skeleton.Bones.Num(); ++b)
+                if (SkeletonData.Skeleton.Bones[b].BoneName.GetTypeHash() == boneName.GetTypeHash())
+                {
+                    boneIndex = b;
+                    break;
+                }
+            if (boneIndex < 0) continue;
+
+            int* cpIdxArr = cluster->GetControlPointIndices();
+            double* wArr = cluster->GetControlPointWeights();
+            int     cnt = cluster->GetControlPointIndicesCount();
+            for (int k = 0; k < cnt; ++k)
+            {
+                int cpIdx = cpIdxArr[k];
+                double w = wArr[k];
+                if (cpIdx >= 0 && cpIdx < cpCount && w > 0.0)
+                    cpWeights[cpIdx].emplace_back(boneIndex, w);
+            }
+        }
+    }
     
+    FString SubMeshMaterial;
+
+    //현재 서브메쉬가 사용하는 Material가져오기 -> 서브메쉬 별로 들어오는데 Material은 왜 배열로 있지 node의 범용성떄문인듯?
     int MaterialCount = Node->GetMaterialCount();
     for (int i=0;i<MaterialCount;i++)
     {
@@ -215,94 +246,114 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
         if (FbxMaterial)
         {
             SubMeshMaterial = FbxMaterial->GetName();
-            break;
-        }
-    }
-    
-    int MatIndex = 0;
-    FMaterialSubset MSubset{};
+            int MatIndex = 0;
+            FMaterialSubset MSubset{};
 
-    for (int sm = 0; sm<SkeletonData.Materials.Num(); sm++)
-    {
-        //TODO: hash로 비교
-        //머테리얼 리스트랑 지금 머테리얼 이름이랑 비교
-        if (SkeletonData.Materials[sm].MaterialName == SubMeshMaterial)
-        {
-            MatIndex = sm;
-            break;
-        }
-    }
-
-    MSubset.MaterialIndex = MatIndex;
-    MSubset.MaterialName = SkeletonData.Materials[MatIndex].MaterialName;
-    
-    for (int p=0; p<PolyCount; ++p)
-    {
-        // const int VertexInPolygon = Mesh->GetPolygonSize(p);
-
-        for (int v=0;v<3;v++)
-        {
-            int cpIndex = Mesh->GetPolygonVertex(p, v);
-
-            FbxVector4 Location = Mesh->GetControlPointAt(cpIndex);
-            FbxVector4 Normal; Mesh->GetPolygonVertexNormal(p, v, Normal);
-            
-            FbxVector2 UV; bool UnMapped = false;
-            if (uvSetName)
+            //무슨 material 사용하는지 찾기
+            for (int sm = 0; sm<SkeletonData.Materials.Num(); sm++)
             {
-                Mesh->GetPolygonVertexUV(p, v, uvSetName, UV, UnMapped);
-            }
-
-            FStaticMeshVertex OutV{};
-            OutV.X = Location[0]; OutV.Y = Location[1]; OutV.Z = Location[2];
-            OutV.NormalX = Normal[0]; OutV.NormalY = Normal[1]; OutV.NormalZ = Normal[2];
-            OutV.U = UV[0]; OutV.V = 1 - UV[1];
-
-            //TODO: Tangent계산
-            OutV.TangentX = 0; OutV.TangentY = 0; OutV.TangentZ = 0; OutV.TangentW = 1;
-
-            //필요없긴함
-            OutV.R = 1; OutV.G = 1; OutV.B = 1; OutV.A = 1;
-            
-            OutV.MaterialIndex = MatIndex;
-            
-            std::string Key = std::to_string(OutV.X) + "/" + std::to_string(OutV.Y) + "/" + std::to_string(OutV.Z) + "/"
-                            + std::to_string(OutV.NormalX) + "/" + std::to_string(OutV.NormalY) + "/" + std::to_string(OutV.NormalZ) + "/"
-                            + std::to_string(OutV.TangentX) + "/" + std::to_string(OutV.TangentY) + "/" + std::to_string(OutV.TangentZ) + "/"
-                            + std::to_string(OutV.U) + "/" + std::to_string(OutV.V) + "/" + std::to_string(OutV.MaterialIndex);
-
-            int NewIdx = SkeletonData.Vertices.Num();
-            
-            if (VertexMap.Contains(Key))
-            {
-                //이미 있으면
-                NewIdx = VertexMap[Key];
-            }else
-            {
-                //중복이면
-                SkeletonData.Vertices.Add(OutV);
+                //머테리얼 리스트랑 지금 머테리얼 이름이랑 비교
+                if (SkeletonData.Materials[sm].MaterialName.GetTypeHash() == SubMeshMaterial.GetTypeHash())
+                {
+                    MatIndex = sm;
+                    break;
+                }
             }
             
-            SkeletonData.Indices.Add(NewIdx);
+            for (int p=0; p<PolyCount; ++p)
+            {
+                for (int v=0;v<3;v++)
+                {
+                    int cpIndex = Mesh->GetPolygonVertex(p, v);
+
+                    FbxVector4 Location = Mesh->GetControlPointAt(cpIndex);
+                    FbxVector4 Normal; Mesh->GetPolygonVertexNormal(p, v, Normal);
+                    
+                    FbxVector2 UV; bool UnMapped = false;
+                    if (uvSetName)
+                    {
+                        Mesh->GetPolygonVertexUV(p, v, uvSetName, UV, UnMapped);
+                    }
+
+                    FStaticMeshVertex OutV{};
+                    OutV.X = Location[0]; OutV.Y = Location[1]; OutV.Z = Location[2];
+                    OutV.NormalX = Normal[0]; OutV.NormalY = Normal[1]; OutV.NormalZ = Normal[2];
+                    OutV.U = UV[0]; OutV.V = 1 - UV[1];
+
+                    //TODO: Tangent계산
+                    OutV.TangentX = 0; OutV.TangentY = 0; OutV.TangentZ = 0; OutV.TangentW = 1;
+
+                    //필요없긴함
+                    OutV.R = Location[0]; OutV.G = Location[1]; OutV.B = Location[2]; OutV.A = 1;
+                    
+                    OutV.MaterialIndex = MatIndex;
+                    
+                    std::string Key = std::to_string(OutV.X) + "/" + std::to_string(OutV.Y) + "/" + std::to_string(OutV.Z) + "/"
+                                    + std::to_string(OutV.NormalX) + "/" + std::to_string(OutV.NormalY) + "/" + std::to_string(OutV.NormalZ) + "/"
+                                    + std::to_string(OutV.TangentX) + "/" + std::to_string(OutV.TangentY) + "/" + std::to_string(OutV.TangentZ) + "/"
+                                    + std::to_string(OutV.U) + "/" + std::to_string(OutV.V) + "/" + std::to_string(OutV.MaterialIndex);
+
+                    int NewIdx = SkeletonData.Vertices.Num();
+                    
+                    if (VertexMap.Contains(Key))
+                    {
+                        //이미 있으면
+                        NewIdx = VertexMap[Key];
+                    }else
+                    {
+                        //중복이면
+                        SkeletonData.Vertices.Add(OutV);
+
+                        // --- FVertexSkeletal (CPU 스키닝용) ---
+                        FSkinnedVertex srcV{};
+                        auto& wlist = cpWeights[cpIndex];
+                        std::sort(wlist.begin(), wlist.end(),
+                            [](auto& A, auto& B) { return A.second > B.second; });
+                        float totalW = 0.f;
+                        int useN = FMath::Min((int)wlist.size(), 4);
+                        for (int k = 0; k < useN; ++k)
+                        {
+                            srcV.BoneIndex[k] = wlist[k].first;
+                            srcV.BoneWeight[k] = (float)wlist[k].second;
+                            totalW += srcV.BoneWeight[k];
+                        }
+                        for (int k = useN; k < 4; ++k)
+                        {
+                            srcV.BoneIndex[k] = INDEX_NONE;
+                            srcV.BoneWeight[k] = 0.f;
+                        }
+                        if (totalW > 0.f)
+                            for (int k = 0; k < useN; ++k)
+                                srcV.BoneWeight[k] /= totalW;
+
+                        SkeletonData.SkinningData.Add(srcV);
+                    }
+                    
+                    SkeletonData.Indices.Add(NewIdx);
+                }
+            }
+
+            MSubset.IndexStart = IndexStart;
+            MSubset.IndexCount = SkeletonData.Indices.Num() - IndexStart;
+            MSubset.MaterialName = SkeletonData.Materials[MatIndex].MaterialName;
+
+            // Tangent
+            for (int32 i = 0; i < SkeletonData.Indices.Num(); i += 3)
+            {
+                FStaticMeshVertex& Vertex0 = SkeletonData.Vertices[SkeletonData.Indices[i]];
+                FStaticMeshVertex& Vertex1 = SkeletonData.Vertices[SkeletonData.Indices[i + 1]];
+                FStaticMeshVertex& Vertex2 = SkeletonData.Vertices[SkeletonData.Indices[i + 2]];
+
+                //TODO: 따로 Math로 CalculateTangent빼서 ObjLoader전부 안부르게 변경
+                //혹은 fbx가 갖고있는 tangent값 불러오게 변경
+                FObjLoader::CalculateTangent(Vertex0, Vertex1, Vertex2);
+                FObjLoader::CalculateTangent(Vertex1, Vertex2, Vertex0);
+                FObjLoader::CalculateTangent(Vertex2, Vertex0, Vertex1);
+            }
+            
+            SkeletonData.MaterialSubsets.Add(MSubset);
         }
     }
-
-    // Tangent
-    for (int32 i = 0; i < SkeletonData.Indices.Num(); i += 3)
-    {
-        FStaticMeshVertex& Vertex0 = SkeletonData.Vertices[SkeletonData.Indices[i]];
-        FStaticMeshVertex& Vertex1 = SkeletonData.Vertices[SkeletonData.Indices[i + 1]];
-        FStaticMeshVertex& Vertex2 = SkeletonData.Vertices[SkeletonData.Indices[i + 2]];
-
-        FObjLoader::CalculateTangent(Vertex0, Vertex1, Vertex2);
-        FObjLoader::CalculateTangent(Vertex1, Vertex2, Vertex0);
-        FObjLoader::CalculateTangent(Vertex2, Vertex0, Vertex1);
-    }
-
-    MSubset.IndexStart = IndexStart;
-    MSubset.IndexCount = SkeletonData.Indices.Num() - IndexStart;
-    
-    SkeletonData.MaterialSubsets.Add(MSubset);
 }
 
 void FFBXLoader::TraverseNodes(FbxNode* Node, FSkeletalMeshRenderData& SkeletalMeshData)

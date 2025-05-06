@@ -59,8 +59,10 @@ struct FSkeletalMeshRenderData
     FSkeleton Skeleton;
     
     TArray<FStaticMeshVertex> Vertices;
-    TArray<FSkinnedVertex> SkinningData;
+    //FStaticMeshVertex 와 Index 동기화 -> SkeletalMesh와 StaticMesh Shader를 합치면 한 버텍스에 둘 정보 넣어서 한번에 관리로 변경
+    TArray<FSkinnedVertex> SkinningData; 
     TArray<uint32> Indices;
+    
     TArray<FSkeletalPose> Poses;
 
     TArray<FObjMaterialInfo> Materials;
