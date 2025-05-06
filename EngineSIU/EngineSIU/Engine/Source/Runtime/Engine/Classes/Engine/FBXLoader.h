@@ -3,6 +3,7 @@
 #include <fbxsdk.h>
 
 #include "Asset/SkeletonAsset.h"
+#include "Asset/StaticMeshAsset.h"
 #include "Container/Array.h"
 #include "Container/Map.h"
 
@@ -21,6 +22,8 @@ struct FFBXLoader
     static void TraverseNodes(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData);
     static void ParseFBX(FSkeletalMeshRenderData& SkeletonData);
     static void LoadSkeletalMesh(const FString& FilePath, FSkeletalMeshRenderData& OutSkeleton);
+    static void CalculateTangent(FSkinnedVertex& PivotVertex, const FSkinnedVertex& Vertex1,
+                          const FSkinnedVertex& Vertex2);
     static void ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMaterials);
     static bool CreateTextureFromFile(const FWString& Filename, bool bIsSRGB);
 

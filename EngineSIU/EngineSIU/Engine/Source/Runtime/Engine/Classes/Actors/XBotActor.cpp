@@ -2,6 +2,8 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/Mesh/SkeletalMesh.h"
+#include "Math/JungleMath.h"
 
 
 AXBotActor::AXBotActor()

@@ -11,6 +11,7 @@
 #include "Components/Light/PointLightComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
 #include "Engine/EditorEngine.h"
+#include "Math/JungleMath.h"
 #include "PropertyEditor/ShowFlags.h"
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
@@ -81,6 +82,13 @@ void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient
     Graphics->DeviceContext->VSSetConstantBuffers(0, 2, NullVSBuffer);
 }
 
+void FSkeletalMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    FMeshRenderPassBase::PrepareRenderState(Viewport);
+    
+    BufferManager->BindConstantBuffer(TEXT("FBoneSkinningConstantBuffer"), 2, EShaderStage::Vertex);
+}
+
 void FSkeletalMeshRenderPass::ClearRenderArr()
 {
     SkeletalMeshComponents.Empty();
@@ -138,12 +146,37 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
             TargetComponent = SelectedActor->GetRootComponent();
         }
 
+        
+        ///////////////////////////
+        //각 본의 skinning행렬 만들기
+        
+        FVector Translation = FVector::ZeroVector;
+        FRotator Rotation = FRotator(0, 50, 0);
+        
+        FMatrix BoneMoveMatrix = JungleMath::CreateModelMatrix(Translation, Rotation, FVector::OneVector);
+
+        for (FBone Bone : RenderData->Skeleton.Bones)
+        {
+            Bone.SkinningMatrix = BoneMoveMatrix * Bone.InvBindPose;
+            
+            FBone NowBone = Bone;
+            
+            while (NowBone.ParentIndex != 0xFFFF) //루트가 0xFFFF
+            {
+                NowBone = RenderData->Skeleton.Bones[NowBone.ParentIndex];
+                Bone.SkinningMatrix = Bone.SkinningMatrix * NowBone.InvBindPose;
+            }
+        } //각 뼈의 모델기준 
+        /////////////////////////////////////////
+        
         //TODO: WorldMatrix 이거 노드 타고가면서 부모 역변환이랑 전부 해서 렌더   
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
         FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
         const bool bIsSelected = (Engine && TargetComponent == Comp);
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+
+        UpdateBonesConstant(RenderData->Skeleton.Bones);
 
         RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
 
@@ -154,9 +187,22 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
     }
 }
 
+void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
+{
+    FBoneSkinningConstantBuffer SkinningMatrices;
+
+    int i=0;
+    for (auto Bone : Bones)
+    {
+        SkinningMatrices.BoneMatrices[i++] = Bone.SkinningMatrix;
+    }
+    
+    BufferManager->UpdateConstantBuffer(TEXT("FBoneSkinningConstantBuffer"), SkinningMatrices);
+}
+
 void FSkeletalMeshRenderPass::RenderPrimitive(FSkeletalMeshRenderData* RenderData, TArray<FMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
+    UINT Stride = sizeof(FSkinnedVertex);
     UINT Offset = 0;
 
     FVertexInfo VertexInfo;
@@ -219,4 +265,79 @@ void FSkeletalMeshRenderPass::RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT 
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &Stride, &Offset);
     Graphics->DeviceContext->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     Graphics->DeviceContext->DrawIndexed(numIndices, 0, 0);
+}
+
+void FSkeletalMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
+{
+    ID3D11VertexShader* VertexShader = nullptr;
+    ID3D11InputLayout* InputLayout = nullptr;
+    ID3D11PixelShader* PixelShader = nullptr;
+
+    switch (ViewMode)
+    {
+    case EViewModeIndex::VMI_Lit_Gouraud:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"GOURAUD_SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"GOURAUD_SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"GOURAUD_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
+        break;
+    case EViewModeIndex::VMI_Lit_Lambert:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
+        break;
+    case EViewModeIndex::VMI_Lit_BlinnPhong:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
+        break;
+    case EViewModeIndex::VMI_LIT_PBR:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"PBR_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
+        break;
+    case EViewModeIndex::VMI_Wireframe:
+    case EViewModeIndex::VMI_Unlit:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(0);
+        break;
+    case EViewModeIndex::VMI_SceneDepth:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderDepth");
+        UpdateLitUnlitConstant(0);
+        break;
+    case EViewModeIndex::VMI_WorldNormal:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
+        UpdateLitUnlitConstant(0);
+        break;
+    case EViewModeIndex::VMI_WorldTangent:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldTangent");
+        UpdateLitUnlitConstant(0);
+        break;
+        // HeatMap ViewMode 등
+    default:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
+        break;
+    }
+
+    // Rasterizer
+    Graphics->ChangeRasterizer(ViewMode);
+
+    // Setup
+    Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(InputLayout);
+    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);    
 }

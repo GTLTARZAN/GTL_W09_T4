@@ -14,17 +14,22 @@ cbuffer MaterialConstants : register(b1)
 #include "Light.hlsl"
 #endif
 
-struct VS_INPUT_StaticMesh
+cbuffer BoneInfo : register(b2){
+    matrix SkinningMatrix;
+}
+
+struct VS_INPUT_SkeletalMesh
 {
     float3 Position : POSITION;
-    float4 Color : COLOR;
     float3 Normal : NORMAL;
     float4 Tangent : TANGENT;
     float2 UV : TEXCOORD;
     uint MaterialIndex : MATERIAL_INDEX;
+    uint BoneIndex[4] : BONE_INDEX;
+    float BoneWeight[4] : BONE_WEIGHT;
 };
 
-PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
+PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
 {
     PS_INPUT_StaticMesh Output;
 
@@ -57,7 +62,7 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     float3 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, DiffuseColor, Material.SpecularColor, Material.Shininess);
     Output.Color = float4(Diffuse.rgb, 1.0);
 #else
-    Output.Color = Input.Color;
+    Output.Color = float4(1,1,1,1);
 #endif
     
     return Output;

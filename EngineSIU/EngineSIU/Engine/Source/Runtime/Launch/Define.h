@@ -390,6 +390,11 @@ struct FObjectConstantBuffer
     FVector pad;
 };
 
+struct FBoneSkinningConstantBuffer //상수버퍼는 최대 64kb까지 지원하기 때문에 FMatrix(64byte) 대충 1024개 지원가능.
+{
+    FMatrix BoneMatrices[1000];
+};
+
 struct FCameraConstantBuffer
 {
     FMatrix ViewMatrix;

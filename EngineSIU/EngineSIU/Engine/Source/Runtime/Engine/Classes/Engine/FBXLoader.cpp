@@ -265,7 +265,6 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
                 for (int v=0;v<3;v++)
                 {
                     int cpIndex = Mesh->GetPolygonVertex(p, v);
-
                     FbxVector4 Location = Mesh->GetControlPointAt(cpIndex);
                     FbxVector4 Normal; Mesh->GetPolygonVertexNormal(p, v, Normal);
                     
@@ -275,16 +274,13 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
                         Mesh->GetPolygonVertexUV(p, v, uvSetName, UV, UnMapped);
                     }
 
-                    FStaticMeshVertex OutV{};
+                    FSkinnedVertex OutV{};
                     OutV.X = Location[0]; OutV.Y = Location[1]; OutV.Z = Location[2];
                     OutV.NormalX = Normal[0]; OutV.NormalY = Normal[1]; OutV.NormalZ = Normal[2];
                     OutV.U = UV[0]; OutV.V = 1 - UV[1];
 
                     //TODO: Tangent계산
                     OutV.TangentX = 0; OutV.TangentY = 0; OutV.TangentZ = 0; OutV.TangentW = 1;
-
-                    //필요없긴함
-                    OutV.R = Location[0]; OutV.G = Location[1]; OutV.B = Location[2]; OutV.A = 1;
                     
                     OutV.MaterialIndex = MatIndex;
                     
@@ -301,11 +297,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
                         NewIdx = VertexMap[Key];
                     }else
                     {
-                        //중복이면
-                        SkeletonData.Vertices.Add(OutV);
-
                         // --- FVertexSkeletal (CPU 스키닝용) ---
-                        FSkinnedVertex srcV{};
                         auto& wlist = cpWeights[cpIndex];
                         std::sort(wlist.begin(), wlist.end(),
                             [](auto& A, auto& B) { return A.second > B.second; });
@@ -313,20 +305,20 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
                         int useN = FMath::Min((int)wlist.size(), 4);
                         for (int k = 0; k < useN; ++k)
                         {
-                            srcV.BoneIndex[k] = wlist[k].first;
-                            srcV.BoneWeight[k] = (float)wlist[k].second;
-                            totalW += srcV.BoneWeight[k];
+                            OutV.BoneIndex[k] = wlist[k].first;
+                            OutV.BoneWeight[k] = (float)wlist[k].second;
+                            totalW += OutV.BoneWeight[k];
                         }
                         for (int k = useN; k < 4; ++k)
                         {
-                            srcV.BoneIndex[k] = INDEX_NONE;
-                            srcV.BoneWeight[k] = 0.f;
+                            OutV.BoneIndex[k] = INDEX_NONE;
+                            OutV.BoneWeight[k] = 0.f;
                         }
                         if (totalW > 0.f)
                             for (int k = 0; k < useN; ++k)
-                                srcV.BoneWeight[k] /= totalW;
+                                OutV.BoneWeight[k] /= totalW;
 
-                        SkeletonData.SkinningData.Add(srcV);
+                        SkeletonData.Vertices.Add(OutV);
                     }
                     
                     SkeletonData.Indices.Add(NewIdx);
@@ -340,15 +332,15 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
             // Tangent
             for (int32 i = 0; i < SkeletonData.Indices.Num(); i += 3)
             {
-                FStaticMeshVertex& Vertex0 = SkeletonData.Vertices[SkeletonData.Indices[i]];
-                FStaticMeshVertex& Vertex1 = SkeletonData.Vertices[SkeletonData.Indices[i + 1]];
-                FStaticMeshVertex& Vertex2 = SkeletonData.Vertices[SkeletonData.Indices[i + 2]];
+                FSkinnedVertex& Vertex0 = SkeletonData.Vertices[SkeletonData.Indices[i]];
+                FSkinnedVertex& Vertex1 = SkeletonData.Vertices[SkeletonData.Indices[i + 1]];
+                FSkinnedVertex& Vertex2 = SkeletonData.Vertices[SkeletonData.Indices[i + 2]];
 
                 //TODO: 따로 Math로 CalculateTangent빼서 ObjLoader전부 안부르게 변경
                 //혹은 fbx가 갖고있는 tangent값 불러오게 변경
-                FObjLoader::CalculateTangent(Vertex0, Vertex1, Vertex2);
-                FObjLoader::CalculateTangent(Vertex1, Vertex2, Vertex0);
-                FObjLoader::CalculateTangent(Vertex2, Vertex0, Vertex1);
+                CalculateTangent(Vertex0, Vertex1, Vertex2);
+                CalculateTangent(Vertex1, Vertex2, Vertex0);
+                CalculateTangent(Vertex2, Vertex0, Vertex1);
             }
             
             SkeletonData.MaterialSubsets.Add(MSubset);
@@ -393,4 +385,65 @@ void FFBXLoader::LoadSkeletalMesh(const FString& FilePath, FSkeletalMeshRenderDa
     importer->Import(FbxLoadScene.get());
     
     ParseFBX(OutSkeleton);
+}
+
+void FFBXLoader::CalculateTangent(FSkinnedVertex& PivotVertex, const FSkinnedVertex& Vertex1, const FSkinnedVertex& Vertex2)
+{
+    const float s1 = Vertex1.U - PivotVertex.U;
+    const float t1 = Vertex1.V - PivotVertex.V;
+    const float s2 = Vertex2.U - PivotVertex.U;
+    const float t2 = Vertex2.V - PivotVertex.V;
+    const float E1x = Vertex1.X - PivotVertex.X;
+    const float E1y = Vertex1.Y - PivotVertex.Y;
+    const float E1z = Vertex1.Z - PivotVertex.Z;
+    const float E2x = Vertex2.X - PivotVertex.X;
+    const float E2y = Vertex2.Y - PivotVertex.Y;
+    const float E2z = Vertex2.Z - PivotVertex.Z;
+
+    const float Denominator = s1 * t2 - s2 * t1;
+    FVector Tangent(1, 0, 0);
+    FVector BiTangent(0, 1, 0);
+    FVector Normal(PivotVertex.NormalX, PivotVertex.NormalY, PivotVertex.NormalZ);
+    
+    if (FMath::Abs(Denominator) > SMALL_NUMBER)
+    {
+        // 정상적인 계산 진행
+        const float f = 1.f / Denominator;
+        
+        const float Tx = f * (t2 * E1x - t1 * E2x);
+        const float Ty = f * (t2 * E1y - t1 * E2y);
+        const float Tz = f * (t2 * E1z - t1 * E2z);
+        Tangent = FVector(Tx, Ty, Tz).GetSafeNormal();
+
+        const float Bx = f * (-s2 * E1x + s1 * E2x);
+        const float By = f * (-s2 * E1y + s1 * E2y);
+        const float Bz = f * (-s2 * E1z + s1 * E2z);
+        BiTangent = FVector(Bx, By, Bz).GetSafeNormal();
+    }
+    else
+    {
+        // 대체 탄젠트 계산 방법
+        // 방법 1: 다른 방향에서 탄젠트 계산 시도
+        FVector Edge1(E1x, E1y, E1z);
+        FVector Edge2(E2x, E2y, E2z);
+    
+        // 기하학적 접근: 두 에지 사이의 각도 이등분선 사용
+        Tangent = (Edge1.GetSafeNormal() + Edge2.GetSafeNormal()).GetSafeNormal();
+    
+        // 만약 두 에지가 평행하거나 반대 방향이면 다른 방법 사용
+        if (Tangent.IsNearlyZero())
+        {
+            // TODO: 기본 축 방향 중 하나 선택 (메시의 주 방향에 따라 선택)
+            Tangent = FVector(1.0f, 0.0f, 0.0f);
+        }
+    }
+
+    Tangent = (Tangent - Normal * FVector::DotProduct(Normal, Tangent)).GetSafeNormal();
+    
+    const float Sign = (FVector::DotProduct(FVector::CrossProduct(Normal, Tangent), BiTangent) < 0.f) ? -1.f : 1.f;
+
+    PivotVertex.TangentX = Tangent.X;
+    PivotVertex.TangentY = Tangent.Y;
+    PivotVertex.TangentZ = Tangent.Z;
+    PivotVertex.TangentW = Sign;
 }

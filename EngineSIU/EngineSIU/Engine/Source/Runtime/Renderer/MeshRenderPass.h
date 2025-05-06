@@ -44,7 +44,7 @@ public:
     void CreateShader();
     void ReleaseShader();
 
-    void ChangeViewMode(EViewModeIndex ViewMode);
+    virtual void ChangeViewMode(EViewModeIndex ViewMode) = 0;
 
 protected:
     FDXDBufferManager* BufferManager;

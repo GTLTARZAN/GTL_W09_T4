@@ -74,17 +74,7 @@ struct FMaterial
 Texture2D MaterialTextures[9] : register(t0);
 SamplerState MaterialSamplers[9] : register(s0);
 
-struct VS_INPUT_StaticMesh
-{
-    float3 Position : POSITION;
-    float4 Color : COLOR;
-    float3 Normal : NORMAL;
-    float4 Tangent : TANGENT;
-    float2 UV : TEXCOORD;
-    uint MaterialIndex : MATERIAL_INDEX;
-};
-
-struct PS_INPUT_StaticMesh
+struct PS_INPUT_StaticMesh //Skeletal이랑 StaticMesh랑 PixelShader에서 차이가 발생하지 않아서 같은 PixelShader사용
 {
     float4 Position : SV_POSITION;
     float4 Color : COLOR;
