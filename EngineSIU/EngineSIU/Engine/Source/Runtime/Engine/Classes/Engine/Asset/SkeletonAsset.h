@@ -19,7 +19,7 @@ struct FSkinnedVertex
 struct FBonePose
 {
     FMatrix LocalTransform = FMatrix::Identity;
-    // FMatrix GlobalTransform = FMatrix::Identity;
+    FMatrix GlobalTransform = FMatrix::Identity;
     // FQuat Rotation = FQuat(0,0,0,0);
     // FVector Location = FVector::ZeroVector;
     // FVector Scale = FVector::OneVector;
@@ -32,7 +32,8 @@ struct FBone
     FMatrix OffsetMatrix = FMatrix::Identity;
     // FMatrix SkinningMatrix;
     FString BoneName;
-    uint16 ParentIndex = 0XFFFF; //루트일 경우 0xff
+    uint32 ParentIndex = 0XFFFF; //루트일 경우 0xff
+    TArray<uint32> Children;
 };
 
 struct FSkeleton

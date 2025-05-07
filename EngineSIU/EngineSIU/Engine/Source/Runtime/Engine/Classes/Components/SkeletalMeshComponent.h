@@ -27,7 +27,11 @@ public:
     virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
 
     virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
-    
+
+    void UpdateBoneGlobalPose();
+    void RotateBone(int BoneIndex, FVector Rot);
+    void RecursiveUpdateGlobal(int Index);
+
     USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
     void SetSkeletalMesh(USkeletalMesh* value);
     

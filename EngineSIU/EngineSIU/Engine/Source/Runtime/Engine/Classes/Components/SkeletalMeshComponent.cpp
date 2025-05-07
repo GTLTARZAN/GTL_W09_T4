@@ -3,6 +3,7 @@
 #include "Components/SkeletalMeshComponent.h"
 
 #include "Launch/EngineLoop.h"
+#include "Math/JungleMath.h"
 #include "Mesh/SkeletalMesh.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
@@ -70,6 +71,55 @@ int USkeletalMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, con
     //
     // }
     return IntersectionNum;
+}
+
+void USkeletalMeshComponent::UpdateBoneGlobalPose()
+{
+    if (SkeletalMesh == nullptr)
+    {
+        return;
+    }
+    
+    TArray<FBone>& Bones = SkeletalMesh->GetRenderData()->Skeleton.Bones;
+    for (int i=0; i<Bones.Num(); i++)
+    {
+        if (Bones[i].ParentIndex == 0xFFFF)
+        {
+            RecursiveUpdateGlobal(i);
+            break;
+        }
+    }
+}
+
+void USkeletalMeshComponent::RotateBone(int BoneIndex, FVector Rot)
+{
+    TArray<FBone>& Bones = SkeletalMesh->GetRenderData()->Skeleton.Bones;
+
+    FMatrix Mat = Bones[BoneIndex].Pose.LocalTransform;
+    FVector T = Mat.GetTranslationVector();
+    FQuat R = Mat.GetMatrixWithoutScale().ToQuat();
+    R = R * FQuat::CreateRotation(Rot.X, Rot.Y, Rot.Z);
+    FVector S = Mat.GetScaleVector();
+    
+    Bones[BoneIndex].Pose.LocalTransform = JungleMath::CreateModelMatrix(T, R, S);
+}
+
+void USkeletalMeshComponent::RecursiveUpdateGlobal(int Index)
+{
+    TArray<FBone>& Bones = SkeletalMesh->GetRenderData()->Skeleton.Bones;
+
+    FBone& CurrentBone = Bones[Index];
+    
+    //루트가 아니면
+    if (CurrentBone.ParentIndex != 0xFFFF)
+    {
+        CurrentBone.Pose.GlobalTransform = CurrentBone.Pose.LocalTransform * Bones[CurrentBone.ParentIndex].Pose.GlobalTransform;
+    }
+
+    for (uint32 ChildIndex : Bones[Index].Children)
+    {
+        RecursiveUpdateGlobal(ChildIndex);
+    }
 }
 
 void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)

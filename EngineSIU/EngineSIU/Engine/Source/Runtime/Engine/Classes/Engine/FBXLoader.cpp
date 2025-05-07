@@ -47,21 +47,23 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
             if (BoneNodes[j] == parent)
             {
                 bone.ParentIndex = (uint16)j;
+                OutSkeleton.Bones[bone.ParentIndex].Children.Add(i);
             }
         }
         
         FbxAMatrix BindPose = boneNode->EvaluateGlobalTransform();
         // InvBindPose(역 바인드포즈) 구하기
         FbxAMatrix InvBindPose = BindPose.Inverse();
-        bone.InvBindPose = FbxAMatrixToFMatrix(InvBindPose);
+        bone.InvBindPose = FMatrix::Transpose(FbxAMatrixToFMatrix(InvBindPose));
 
         FBonePose BonePose;
         
         //처음에는 글로벌, 루트는 글로벌이 곧 로컬
-        BonePose.LocalTransform = FbxAMatrixToFMatrix(BindPose);
+        BonePose.LocalTransform = FMatrix::Transpose(FbxAMatrixToFMatrix(BindPose));
+        BonePose.GlobalTransform = BonePose.LocalTransform;
         if (bone.ParentIndex != 0xFFFF)
         {
-            BonePose.LocalTransform = OutSkeleton.Bones[bone.ParentIndex].InvBindPose * BonePose.LocalTransform;
+            BonePose.LocalTransform = BonePose.LocalTransform * OutSkeleton.Bones[bone.ParentIndex].InvBindPose;
         }
         bone.Pose = BonePose;
         

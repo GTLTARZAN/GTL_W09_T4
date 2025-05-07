@@ -133,6 +133,10 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
             continue;
         }
 
+        Comp->RotateBone(2, FVector(0, 1, 0));
+        
+        Comp->UpdateBoneGlobalPose();
+        
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
@@ -170,27 +174,15 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
 void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
 {
     FBoneSkinningConstantBuffer SkinningMatrices;
-
     ///////////////////////////
-    //각 본의 skinning행렬 만들기
-    FMatrix MoveMatrix = FMatrix::CreateRotationMatrix(0, 1, 0);
-    
-    Bones[2].Pose.LocalTransform = Bones[2].Pose.LocalTransform * MoveMatrix;
-    
     int i=0;
     for (FBone Bone : Bones)
     {
-        FBone NowBone = Bone;
-        
-        FMatrix SkinningMatrix = NowBone.Pose.LocalTransform;
-        
-        while (NowBone.ParentIndex != 0xFFFF) //루트가 0xFFFF
+        FMatrix SkinningMatrix = Bone.InvBindPose * Bone.Pose.LocalTransform;
+        if (Bone.ParentIndex != 0xFFFF)
         {
-            NowBone = Bones[NowBone.ParentIndex];
-            SkinningMatrix = NowBone.Pose.LocalTransform * SkinningMatrix;
+            SkinningMatrix = SkinningMatrix * Bones[Bone.ParentIndex].Pose.GlobalTransform;
         }
-        
-        SkinningMatrix = Bone.InvBindPose * SkinningMatrix;// * Bone.OffsetMatrix;
         
         SkinningMatrices.BoneMatrices[i++] = SkinningMatrix;
     } //각 뼈의 모델기준 
