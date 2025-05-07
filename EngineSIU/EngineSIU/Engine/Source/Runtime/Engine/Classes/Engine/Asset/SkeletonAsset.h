@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Define.h"
 #include "Container/Array.h"
+#include "Container/Set.h"
 #include "Math/Matrix.h"
 #include "Math/Quat.h"
 
@@ -17,16 +18,21 @@ struct FSkinnedVertex
 
 struct FBonePose
 {
-    FRotator Rotation = FRotator::ZeroRotator;
-    FVector Location = FVector::ZeroVector;
-    FVector Scale = FVector::OneVector;
+    FMatrix LocalTransform = FMatrix::Identity;
+
+    
+    
+    // FQuat Rotation = FQuat(0,0,0,0);
+    // FVector Location = FVector::ZeroVector;
+    // FVector Scale = FVector::OneVector;
 };
 
 struct FBone
 {
     FMatrix InvBindPose;
     FBonePose Pose;
-    FMatrix SkinningMatrix;
+    FMatrix OffsetMatrix;
+    // FMatrix SkinningMatrix;
     FString BoneName;
     uint16 ParentIndex = 0XFFFF; //루트일 경우 0xff
 };

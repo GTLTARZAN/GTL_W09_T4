@@ -43,13 +43,28 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
         FbxNode* parent = boneNode->GetParent();
         bone.ParentIndex = 0xFFFF;
         for (size_t j = 0; j < BoneNodes.size(); ++j)
+        {
             if (BoneNodes[j] == parent)
+            {
                 bone.ParentIndex = (uint16)j;
-
+            }
+        }
+        
+        FbxAMatrix BindPose = boneNode->EvaluateGlobalTransform();
+        
         // InvBindPose(역 바인드포즈) 구하기
-        FbxAMatrix bindPose = boneNode->EvaluateLocalTransform();
-        bone.InvBindPose = FbxAMatrixToFMatrix(bindPose.Transpose().Inverse());
+        FbxAMatrix InvBindPose = BindPose.Inverse();
+        bone.InvBindPose = FbxAMatrixToFMatrix(InvBindPose);
 
+        FBonePose BonePose;
+        BonePose.LocalTransform = FbxAMatrixToFMatrix(BindPose);
+        //노드는 부모가 인덱스가 더 앞이기 때문에 부모부터 계속해서 업데이트해주면 됨.
+        if (bone.ParentIndex != 0xFFFF)
+        {
+            BonePose.LocalTransform = OutSkeleton.Bones[bone.ParentIndex].InvBindPose * BonePose.LocalTransform;
+        }
+        bone.Pose = BonePose;
+        
         OutSkeleton.Bones.Add(bone);
     }
 }
@@ -68,8 +83,7 @@ void FFBXLoader::ParseMaterials(FbxNode* Node, TArray<FObjMaterialInfo>& OutMate
         
         for (auto SkeletonMaterial: OutMaterials)
         {
-            //TODO: ㅎㅐ쉬로 검사
-            if (MatName == SkeletonMaterial.MaterialName)
+            if (MatName.GetTypeHash() == SkeletonMaterial.MaterialName.GetTypeHash())
             {
                 //이미 있으면 continue
                 bIsFind = true;

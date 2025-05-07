@@ -331,6 +331,20 @@ FMatrix FMatrix::GetRotationMatrix(const FQuat& InRotation)
     return Result;
 }
 
+FVector4 FMatrix::MulVecMat(const FVector4& Vec, const FMatrix& Mat)
+{
+    // Vec: (x, y, z, w)
+    // Mat: 4x4 행렬 (row-major)
+    FVector4 Result;
+
+    Result.X = Vec.X * Mat.M[0][0] + Vec.Y * Mat.M[1][0] + Vec.Z * Mat.M[2][0] + Vec.W * Mat.M[3][0];
+    Result.Y = Vec.X * Mat.M[0][1] + Vec.Y * Mat.M[1][1] + Vec.Z * Mat.M[2][1] + Vec.W * Mat.M[3][1];
+    Result.Z = Vec.X * Mat.M[0][2] + Vec.Y * Mat.M[1][2] + Vec.Z * Mat.M[2][2] + Vec.W * Mat.M[3][2];
+    Result.W = Vec.X * Mat.M[0][3] + Vec.Y * Mat.M[1][3] + Vec.Z * Mat.M[2][3] + Vec.W * Mat.M[3][3];
+
+    return Result;
+}
+
 FQuat FMatrix::ToQuat() const
 {
     return FQuat(*this);

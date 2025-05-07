@@ -1,4 +1,7 @@
 #include "SkeletalMeshRenderPass.h"
+
+#include <stack>
+
 #include "EngineLoop.h"
 #include "World/World.h"
 #include "RendererHelpers.h"
@@ -170,21 +173,25 @@ void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
 
     ///////////////////////////
     //각 본의 skinning행렬 만들기
-
+    FMatrix RotMatrix = FMatrix::CreateRotationMatrix(0, 10, 0);
+    Bones[2].Pose.LocalTransform = Bones[2].Pose.LocalTransform * RotMatrix;
+    
     int i=0;
     for (FBone Bone : Bones)
     {
-        Bone.SkinningMatrix = JungleMath::CreateModelMatrix(Bone.Pose.Location, Bone.Pose.Rotation, Bone.Pose.Scale);
-            
         FBone NowBone = Bone;
+        
+        FMatrix SkinningMatrix = NowBone.Pose.LocalTransform;
         
         while (NowBone.ParentIndex != 0xFFFF) //루트가 0xFFFF
         {
             NowBone = Bones[NowBone.ParentIndex];
-            Bone.SkinningMatrix = Bone.SkinningMatrix * JungleMath::CreateModelMatrix(NowBone.Pose.Location, NowBone.Pose.Rotation, NowBone.Pose.Scale);
+            SkinningMatrix = NowBone.Pose.LocalTransform * SkinningMatrix;
         }
-
-        SkinningMatrices.BoneMatrices[i++] = Bone.SkinningMatrix;
+        
+        SkinningMatrix = Bone.InvBindPose * SkinningMatrix;
+        
+        SkinningMatrices.BoneMatrices[i++] = SkinningMatrix;
     } //각 뼈의 모델기준 
     /////////////////////////////////////////
     

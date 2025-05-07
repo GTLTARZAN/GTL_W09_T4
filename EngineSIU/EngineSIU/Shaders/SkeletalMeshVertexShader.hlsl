@@ -38,6 +38,7 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
 
     //Skinning곱해주기
     float4 skinnedPos = float4(0,0,0,0);
+
     for (int i = 0; i < 4; ++i)
     {
         if (Input.BoneIndex[i] == 0xFFFF)
@@ -49,8 +50,9 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
         float4 transformed = mul(ModelPos, SkinningMatrix[idx]);
         skinnedPos += transformed * weight;
     }
+    
     Output.Position = skinnedPos;
-
+    
     Output.Position = mul(Output.Position, WorldMatrix);
     
     Output.WorldPosition = Output.Position.xyz;

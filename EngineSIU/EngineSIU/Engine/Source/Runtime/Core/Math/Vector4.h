@@ -7,7 +7,7 @@
 struct FVector4
 {
     float X, Y, Z, W;
-
+    
     FVector4() : X(0), Y(0), Z(0), W(0) {}
     FVector4(float InX, float InY, float InZ, float InW)
         : X(InX), Y(InY), Z(InZ), W(InW)
@@ -27,6 +27,8 @@ struct FVector4
 
     FVector4 operator/(float Scalar) const;
 
+    FVector xyz() const { return FVector(X, Y, Z); }
+    
     FString ToString() const;
     bool InitFromString(const FString& InSourceString);
 };

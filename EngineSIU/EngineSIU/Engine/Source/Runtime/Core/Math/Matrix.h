@@ -45,6 +45,8 @@ public:
     static FMatrix GetRotationMatrix(const FRotator& InRotation);
     static FMatrix GetRotationMatrix(const FQuat& InRotation);
 
+    static FVector4 MulVecMat(const FVector4& FVector, const FMatrix& Mat);
+    
     FQuat ToQuat() const;
 
     FVector GetScaleVector(float Tolerance = SMALL_NUMBER) const;
