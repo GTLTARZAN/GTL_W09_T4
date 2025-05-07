@@ -51,14 +51,14 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
         }
         
         FbxAMatrix BindPose = boneNode->EvaluateGlobalTransform();
-        
         // InvBindPose(역 바인드포즈) 구하기
         FbxAMatrix InvBindPose = BindPose.Inverse();
         bone.InvBindPose = FbxAMatrixToFMatrix(InvBindPose);
 
         FBonePose BonePose;
+        
+        //처음에는 글로벌, 루트는 글로벌이 곧 로컬
         BonePose.LocalTransform = FbxAMatrixToFMatrix(BindPose);
-        //노드는 부모가 인덱스가 더 앞이기 때문에 부모부터 계속해서 업데이트해주면 됨.
         if (bone.ParentIndex != 0xFFFF)
         {
             BonePose.LocalTransform = OutSkeleton.Bones[bone.ParentIndex].InvBindPose * BonePose.LocalTransform;
@@ -213,8 +213,7 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
     auto* uvElem = Mesh->GetElementUV();
     const char* uvSetName = uvElem ? uvElem->GetName() : nullptr;
     int PolyCount = Mesh->GetPolygonCount();
-
-
+    
     int cpCount = Mesh->GetControlPointsCount();
     std::vector<std::vector<std::pair<int, double>>> cpWeights(cpCount);
     for (int si = 0; si < Mesh->GetDeformerCount(FbxDeformer::eSkin); ++si)
@@ -225,18 +224,24 @@ void FFBXLoader::ParseMesh(FbxNode* Node, FSkeletalMeshRenderData& SkeletonData)
             FbxCluster* cluster = skin->GetCluster(ci);
             FbxNode* boneNode = cluster->GetLink();
             if (!boneNode) continue;
-
-            // boneNode 이름 → skeleton 에서 인덱스 찾기
+            
             FString boneName = FString(boneNode->GetName());
             int boneIndex = INDEX_NONE;
             for (int b = 0; b < SkeletonData.Skeleton.Bones.Num(); ++b)
+            {
                 if (SkeletonData.Skeleton.Bones[b].BoneName.GetTypeHash() == boneName.GetTypeHash())
                 {
+                    // FbxAMatrix OffsetTransformMatrix;
+                    // cluster->GetTransformMatrix(OffsetTransformMatrix);
+                    // SkeletonData.Skeleton.Bones[b].OffsetMatrix = FbxAMatrixToFMatrix(OffsetTransformMatrix);
+                    
                     boneIndex = b;
                     break;
                 }
-            if (boneIndex < 0) continue;
-
+            }
+            
+            if (boneIndex < 0)  continue;
+            
             int* cpIdxArr = cluster->GetControlPointIndices();
             double* wArr = cluster->GetControlPointWeights();
             int     cnt = cluster->GetControlPointIndicesCount();

@@ -173,8 +173,9 @@ void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
 
     ///////////////////////////
     //각 본의 skinning행렬 만들기
-    FMatrix RotMatrix = FMatrix::CreateRotationMatrix(0, 10, 0);
-    Bones[2].Pose.LocalTransform = Bones[2].Pose.LocalTransform * RotMatrix;
+    FMatrix MoveMatrix = FMatrix::CreateRotationMatrix(0, 1, 0);
+    
+    Bones[2].Pose.LocalTransform = Bones[2].Pose.LocalTransform * MoveMatrix;
     
     int i=0;
     for (FBone Bone : Bones)
@@ -189,7 +190,7 @@ void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
             SkinningMatrix = NowBone.Pose.LocalTransform * SkinningMatrix;
         }
         
-        SkinningMatrix = Bone.InvBindPose * SkinningMatrix;
+        SkinningMatrix = Bone.InvBindPose * SkinningMatrix;// * Bone.OffsetMatrix;
         
         SkinningMatrices.BoneMatrices[i++] = SkinningMatrix;
     } //각 뼈의 모델기준 
