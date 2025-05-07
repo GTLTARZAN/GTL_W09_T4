@@ -178,11 +178,7 @@ void FSkeletalMeshRenderPass::UpdateBonesConstant(TArray<FBone>& Bones)
     int i=0;
     for (FBone Bone : Bones)
     {
-        FMatrix SkinningMatrix = Bone.InvBindPose * Bone.Pose.LocalTransform;
-        if (Bone.ParentIndex != 0xFFFF)
-        {
-            SkinningMatrix = SkinningMatrix * Bones[Bone.ParentIndex].Pose.GlobalTransform;
-        }
+        FMatrix SkinningMatrix = Bone.InvBindPose * Bone.Pose.GlobalTransform;
         
         SkinningMatrices.BoneMatrices[i++] = SkinningMatrix;
     } //각 뼈의 모델기준 
