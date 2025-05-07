@@ -18,11 +18,11 @@ struct FSkinnedVertex
 
 struct FBonePose
 {
-    FMatrix LocalTransform = FMatrix::Identity;
+    // FMatrix LocalTransform = FMatrix::Identity;
     FMatrix GlobalTransform = FMatrix::Identity;
-    // FQuat Rotation = FQuat(0,0,0,0);
-    // FVector Location = FVector::ZeroVector;
-    // FVector Scale = FVector::OneVector;
+    FVector Location = FVector::ZeroVector;
+    FQuat Rotation = FQuat(0,0,0,0);
+    FVector Scale = FVector::OneVector;
 };
 
 struct FBone

@@ -59,12 +59,16 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
         FBonePose BonePose;
         
         //처음에는 글로벌, 루트는 글로벌이 곧 로컬
-        BonePose.LocalTransform = FMatrix::Transpose(FbxAMatrixToFMatrix(BindPose));
-        BonePose.GlobalTransform = BonePose.LocalTransform;
+        FMatrix Mat = FMatrix::Transpose(FbxAMatrixToFMatrix(BindPose));
+        BonePose.GlobalTransform = Mat;
+
         if (bone.ParentIndex != 0xFFFF)
         {
-            BonePose.LocalTransform = BonePose.LocalTransform * OutSkeleton.Bones[bone.ParentIndex].InvBindPose;
+            Mat = OutSkeleton.Bones[bone.ParentIndex].InvBindPose * Mat;
         }
+        BonePose.Location = Mat.GetTranslationVector();
+        BonePose.Rotation = Mat.GetMatrixWithoutScale().ToQuat();
+        BonePose.Scale = Mat.GetScaleVector();
         bone.Pose = BonePose;
         
         OutSkeleton.Bones.Add(bone);

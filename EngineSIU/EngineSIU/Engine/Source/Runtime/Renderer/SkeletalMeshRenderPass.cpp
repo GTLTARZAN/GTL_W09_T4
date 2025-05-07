@@ -133,7 +133,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FEdi
             continue;
         }
 
-        Comp->RotateBone(2, FVector(0, 1, 0));
+        // Comp->RotateBone(2, FVector(0, 1, 0));
         
         Comp->UpdateBoneGlobalPose();
         
