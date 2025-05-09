@@ -105,8 +105,9 @@ void USkeletalMeshComponent::RecursiveUpdateGlobal(int Index)
 
     FBone& CurrentBone = Bones[Index];
 
+    //일단 자신의 로컬을 글로벌로 세팅
     CurrentBone.Pose.GlobalTransform = JungleMath::CreateModelMatrix(CurrentBone.Pose.Location, CurrentBone.Pose.Rotation, CurrentBone.Pose.Scale);
-    //루트가 아니면
+    //루트가 아니면 부모의 글로벌과 곱해줌.
     if (CurrentBone.ParentIndex != 0xFFFF)
     {
         CurrentBone.Pose.GlobalTransform = CurrentBone.Pose.GlobalTransform * Bones[CurrentBone.ParentIndex].Pose.GlobalTransform;

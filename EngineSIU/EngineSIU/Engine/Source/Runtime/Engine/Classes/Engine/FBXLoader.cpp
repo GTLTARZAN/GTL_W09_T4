@@ -51,24 +51,22 @@ void FFBXLoader::ParseSkeleton(FSkeleton& OutSkeleton)
             }
         }
         
-        FbxAMatrix BindPose = boneNode->EvaluateGlobalTransform();
-        // InvBindPose(역 바인드포즈) 구하기
-        FbxAMatrix InvBindPose = BindPose.Inverse();
-        bone.InvBindPose = FMatrix::Transpose(FbxAMatrixToFMatrix(InvBindPose));
+        FbxAMatrix LocalBindPose = boneNode->EvaluateLocalTransform();
 
         FBonePose BonePose;
+        FMatrix Matrix = FbxAMatrixToFMatrix(LocalBindPose);
+        BonePose.Location = Matrix.GetTranslationVector();
+        BonePose.Rotation = Matrix.GetMatrixWithoutScale().ToQuat();
+        BonePose.Scale = Matrix.GetScaleVector();
         
-        //처음에는 글로벌, 루트는 글로벌이 곧 로컬
-        FMatrix Mat = FMatrix::Transpose(FbxAMatrixToFMatrix(BindPose));
-        BonePose.GlobalTransform = Mat;
-
         if (bone.ParentIndex != 0xFFFF)
         {
-            Mat = OutSkeleton.Bones[bone.ParentIndex].InvBindPose * Mat;
+            Matrix = Matrix * OutSkeleton.Bones[bone.ParentIndex].Pose.GlobalTransform;
         }
-        BonePose.Location = Mat.GetTranslationVector();
-        BonePose.Rotation = Mat.GetMatrixWithoutScale().ToQuat();
-        BonePose.Scale = Mat.GetScaleVector();
+
+        BonePose.GlobalTransform = Matrix;
+        bone.InvBindPose = FMatrix::Inverse(BonePose.GlobalTransform); //GlobalTransform은 joint에서 model로 가는 행렬
+        
         bone.Pose = BonePose;
         
         OutSkeleton.Bones.Add(bone);
